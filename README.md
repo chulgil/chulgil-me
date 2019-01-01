@@ -1,1 +1,1 @@
-# my-vue-blog
+# Build A Static Blog With Nuxt.js And Contentful
