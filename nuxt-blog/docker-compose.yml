@@ -1,0 +1,20 @@
+version: '3.5'
+
+services:
+  nuxt-landing-page:
+    build: ./
+    restart: always
+    labels:
+      - "traefik.enabled=true"
+      - "traefik.backend=nuxt-landing-page"
+      - "traefik.frontend.rule=Host:chulgil.me"
+      - "traefik.docker.network=traefiknet"
+      - "traefik.port=2368"
+    networks:
+      - traefiknet
+    container_name: nuxt-landing-page
+    environment:
+      url: https://chulgil.me
+networks:
+  traefiknet:
+    external: true
