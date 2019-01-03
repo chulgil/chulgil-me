@@ -9,7 +9,7 @@ services:
       - "traefik.backend=nuxt-landing-page"
       - "traefik.frontend.rule=Host:chulgil.me"
       - "traefik.docker.network=traefiknet"
-      - "traefik.port=2368"
+      - "traefik.port=3000"
     networks:
       - traefiknet
     container_name: nuxt-landing-page
