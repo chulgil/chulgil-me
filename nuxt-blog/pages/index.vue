@@ -65,7 +65,7 @@
                         <li><i class="fa-li fas fa-home"></i>https://chulgil.me</li>
                         <li><i class="fa-li fas fa-envelope"></i>contact@chulgil.me</li>
                         <li><i class="fa-li fas fa-map-marker-alt"></i>
-                            5441 N East River Rd Chicago, IL 
+                            5441 N East River Rd Chicago, IL 60656
                         </li>
                       </ul>
                     </div>
