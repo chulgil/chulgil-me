@@ -1,7 +1,7 @@
 {
   "name": "cglee-nuxt-blog",
   "version": "1.0.0",
-  "description": "CG.Lee`s pasonal blog created with JAMStack Nuxt.js",
+  "description": "CG.Lee`s pesonal blog created with JAMStack Nuxt.js",
   "author": "CG.Lee <contact@chulgil.me>",
   "private": true,
   "scripts": {
