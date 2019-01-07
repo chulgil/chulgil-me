@@ -1,8 +1,8 @@
 {
-  "name": "nuxt-blog",
+  "name": "cglee-nuxt-blog",
   "version": "1.0.0",
-  "description": "Nuxt.js project",
-  "author": "CGLee <contact@chulgil.me>",
+  "description": "CG.Lee`s pasonal blog created with JAMStack Nuxt.js",
+  "author": "CG.Lee <contact@chulgil.me>",
   "private": true,
   "scripts": {
     "dev": "nuxt",
@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free-webfonts": "^1.0.9",
+    "@nuxtjs/pwa": "^2.6.0",
+    "@nuxtjs/sitemap": "^0.2.0",
     "nuxt": "^2.0.0",
     "vue-particles": "^1.0.9"
   },
