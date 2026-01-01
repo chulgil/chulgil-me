@@ -34,6 +34,12 @@ export default function ViolinSamplesPage() {
             ← 메인으로
           </Link>
           <h1 className="font-heading text-lg">바이올린 렌더링 샘플</h1>
+          <Link
+            href="/samples/quartet"
+            className="font-body text-sm text-cream/60 hover:text-gold transition-colors"
+          >
+            현악 4중주 →
+          </Link>
         </div>
       </header>
 
