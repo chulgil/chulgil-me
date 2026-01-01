@@ -19,19 +19,17 @@ export default function CustomCursor() {
     document.body.style.cursor = "none";
 
     const onMouseMove = (e: MouseEvent) => {
-      // Main cursor follows immediately
-      gsap.to(cursor, {
+      // Main cursor follows immediately (no animation delay)
+      gsap.set(cursor, {
         x: e.clientX,
         y: e.clientY,
-        duration: 0.1,
-        ease: "power2.out",
       });
 
-      // Follower has delay
+      // Follower has smooth delay for visual effect
       gsap.to(follower, {
         x: e.clientX,
         y: e.clientY,
-        duration: 0.3,
+        duration: 0.15,
         ease: "power2.out",
       });
     };
@@ -123,7 +121,7 @@ export default function CustomCursor() {
         className={`
           fixed top-0 left-0 pointer-events-none z-[9999]
           -translate-x-1/2 -translate-y-1/2
-          transition-transform duration-150
+          transition-transform duration-75
           ${isClicking ? "scale-75" : "scale-100"}
         `}
         style={{ mixBlendMode: "difference" }}
@@ -131,7 +129,7 @@ export default function CustomCursor() {
         <span
           className={`
             block text-2xl text-gold
-            transition-all duration-200
+            transition-all duration-100
             ${isHovering ? "scale-150 rotate-12" : "scale-100 rotate-0"}
           `}
         >
