@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useState } from "react";
 
 const StringQuartetCanvas = dynamic(
   () => import("@/components/canvas/StringQuartetCanvas"),
@@ -15,7 +16,120 @@ const StringQuartetCanvas = dynamic(
   }
 );
 
+const StringQuartetV1 = dynamic(
+  () => import("@/components/canvas/StringQuartetV1"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full flex items-center justify-center text-gold">
+        <span className="animate-pulse">Loading V1...</span>
+      </div>
+    ),
+  }
+);
+
+const StringQuartetV2 = dynamic(
+  () => import("@/components/canvas/StringQuartetV2"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full flex items-center justify-center text-gold">
+        <span className="animate-pulse">Loading V2...</span>
+      </div>
+    ),
+  }
+);
+
+const StringQuartetV3 = dynamic(
+  () => import("@/components/canvas/StringQuartetV3"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full flex items-center justify-center text-gold">
+        <span className="animate-pulse">Loading V3...</span>
+      </div>
+    ),
+  }
+);
+
+const StringQuartetV4 = dynamic(
+  () => import("@/components/canvas/StringQuartetV4"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full flex items-center justify-center text-gold">
+        <span className="animate-pulse">Loading V4...</span>
+      </div>
+    ),
+  }
+);
+
+type VersionKey = "original" | "v1" | "v2" | "v3" | "v4";
+
+const VERSIONS: Record<
+  VersionKey,
+  { name: string; description: string; features: string[] }
+> = {
+  original: {
+    name: "Original",
+    description: "클래식 다크 테마 - 콘서트홀 무대",
+    features: ["스포트라이트 효과", "바닥 반사", "호버 시 소리"],
+  },
+  v1: {
+    name: "V1 - Light",
+    description: "밝은 아이보리 테마 - 주간 콘서트",
+    features: ["따뜻한 햇살 효과", "부드러운 그림자", "밝은 색상"],
+  },
+  v2: {
+    name: "V2 - Animated",
+    description: "동적 애니메이션 - 호흡하는 악기들",
+    features: [
+      "물결치는 현",
+      "호흡 애니메이션",
+      "에너지 연결선",
+      "네온 효과",
+    ],
+  },
+  v3: {
+    name: "V3 - Particle",
+    description: "파티클 효과 - 떠다니는 음표들",
+    features: [
+      "음표 파티클",
+      "별빛 배경",
+      "컬러 오라",
+      "소리 파동",
+    ],
+  },
+  v4: {
+    name: "V4 - Interactive",
+    description: "인터랙티브 연주 - 클릭으로 연주",
+    features: [
+      "클릭 연주",
+      "앙상블 모드",
+      "웨이브폼 시각화",
+      "리듬 펄스",
+    ],
+  },
+};
+
 export default function StringQuartetPage() {
+  const [activeVersion, setActiveVersion] = useState<VersionKey>("original");
+
+  const renderCanvas = () => {
+    switch (activeVersion) {
+      case "v1":
+        return <StringQuartetV1 />;
+      case "v2":
+        return <StringQuartetV2 />;
+      case "v3":
+        return <StringQuartetV3 />;
+      case "v4":
+        return <StringQuartetV4 />;
+      default:
+        return <StringQuartetCanvas />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-ebony text-ivory">
       {/* Header */}
@@ -40,7 +154,7 @@ export default function StringQuartetPage() {
       {/* Main Content */}
       <main className="pt-20">
         {/* Hero Section */}
-        <div className="text-center py-12 px-6">
+        <div className="text-center py-8 px-6">
           <div className="flex items-center justify-center gap-4 mb-4">
             <span className="text-2xl text-gold">♩</span>
             <h2 className="font-heading text-4xl md:text-5xl">String Quartet</h2>
@@ -50,33 +164,75 @@ export default function StringQuartetPage() {
             두 대의 바이올린, 비올라, 첼로가 만드는 완벽한 하모니
           </p>
           <p className="font-body text-sm text-cream/50">
-            각 악기 위에 마우스를 올려보세요
+            개방현: 첼로(G/솔) · 비올라(D/레) · 바이올린2(A/라) · 바이올린1(E/미)
           </p>
         </div>
 
+        {/* Version Selector */}
+        <div className="max-w-5xl mx-auto px-6 mb-6">
+          <div className="flex flex-wrap justify-center gap-2">
+            {(Object.keys(VERSIONS) as VersionKey[]).map((key) => (
+              <button
+                key={key}
+                onClick={() => setActiveVersion(key)}
+                className={`px-4 py-2 rounded-full font-body text-sm transition-all ${
+                  activeVersion === key
+                    ? "bg-gold text-ebony"
+                    : "bg-charcoal/30 text-cream/70 hover:bg-charcoal/50 hover:text-cream"
+                }`}
+              >
+                {VERSIONS[key].name}
+              </button>
+            ))}
+          </div>
+          <div className="text-center mt-3">
+            <p className="font-body text-sm text-gold">
+              {VERSIONS[activeVersion].description}
+            </p>
+          </div>
+        </div>
+
         {/* Canvas Section */}
-        <div className="px-6 pb-12">
+        <div className="px-6 pb-8">
           <div className="max-w-5xl mx-auto">
             <div className="bg-gradient-to-b from-charcoal/10 to-ebony rounded-2xl border border-charcoal/30 overflow-hidden shadow-2xl">
-              <div className="h-[600px] md:h-[700px]">
-                <StringQuartetCanvas />
-              </div>
+              <div className="h-[550px] md:h-[650px]">{renderCanvas()}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Version Features */}
+        <div className="max-w-4xl mx-auto px-6 pb-8">
+          <div className="bg-charcoal/20 rounded-xl border border-charcoal/30 p-6">
+            <h3 className="font-heading text-lg text-gold mb-4">
+              {VERSIONS[activeVersion].name} 특징
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {VERSIONS[activeVersion].features.map((feature, i) => (
+                <span
+                  key={i}
+                  className="px-3 py-1 bg-gold/10 text-gold text-sm rounded-full"
+                >
+                  {feature}
+                </span>
+              ))}
             </div>
           </div>
         </div>
 
         {/* Instrument Info */}
-        <div className="max-w-4xl mx-auto px-6 pb-16">
+        <div className="max-w-4xl mx-auto px-6 pb-12">
+          <h3 className="font-heading text-xl text-center mb-6">악기 소개</h3>
           <div className="grid md:grid-cols-2 gap-6">
             {/* Violin 1 */}
             <div className="bg-charcoal/20 rounded-xl border border-charcoal/30 p-6">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-gold text-2xl">♪</span>
-                <h3 className="font-heading text-xl">제1 바이올린</h3>
+                <h3 className="font-heading text-xl">제1 바이올린 (E/미)</h3>
               </div>
               <p className="font-body text-sm text-cream/70">
-                앙상블의 리더로서 주선율을 담당합니다.
-                가장 높은 음역대에서 화려하고 표현력 있는 멜로디를 연주합니다.
+                앙상블의 리더로서 주선율을 담당합니다. 가장 높은 음역대에서
+                화려하고 표현력 있는 멜로디를 연주합니다.
               </p>
             </div>
 
@@ -84,11 +240,11 @@ export default function StringQuartetPage() {
             <div className="bg-charcoal/20 rounded-xl border border-charcoal/30 p-6">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-gold text-2xl">♪</span>
-                <h3 className="font-heading text-xl">제2 바이올린</h3>
+                <h3 className="font-heading text-xl">제2 바이올린 (A/라)</h3>
               </div>
               <p className="font-body text-sm text-cream/70">
-                제1 바이올린과 대화하며 화음을 풍성하게 만듭니다.
-                때로는 반주를, 때로는 대선율을 연주합니다.
+                제1 바이올린과 대화하며 화음을 풍성하게 만듭니다. 때로는 반주를,
+                때로는 대선율을 연주합니다.
               </p>
             </div>
 
@@ -96,11 +252,11 @@ export default function StringQuartetPage() {
             <div className="bg-charcoal/20 rounded-xl border border-charcoal/30 p-6">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-gold text-2xl">♫</span>
-                <h3 className="font-heading text-xl">비올라</h3>
+                <h3 className="font-heading text-xl">비올라 (D/레)</h3>
               </div>
               <p className="font-body text-sm text-cream/70">
-                바이올린보다 깊고 따뜻한 음색으로 중음역을 담당합니다.
-                앙상블의 화성을 채우는 핵심적인 역할을 합니다.
+                바이올린보다 깊고 따뜻한 음색으로 중음역을 담당합니다. 앙상블의
+                화성을 채우는 핵심적인 역할을 합니다.
               </p>
             </div>
 
@@ -108,43 +264,66 @@ export default function StringQuartetPage() {
             <div className="bg-charcoal/20 rounded-xl border border-charcoal/30 p-6">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-gold text-2xl">♬</span>
-                <h3 className="font-heading text-xl">첼로</h3>
+                <h3 className="font-heading text-xl">첼로 (G/솔)</h3>
               </div>
               <p className="font-body text-sm text-cream/70">
-                풍부하고 깊은 저음으로 앙상블의 기초를 다집니다.
-                베이스라인부터 서정적인 멜로디까지 폭넓게 표현합니다.
+                풍부하고 깊은 저음으로 앙상블의 기초를 다집니다. 베이스라인부터
+                서정적인 멜로디까지 폭넓게 표현합니다.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Technical Details */}
+        {/* Version Comparison */}
         <div className="max-w-4xl mx-auto px-6 pb-16">
           <div className="bg-charcoal/10 rounded-xl border border-charcoal/20 p-6">
-            <h3 className="font-heading text-lg text-gold mb-4">구현 기술</h3>
-            <div className="flex flex-wrap gap-2 mb-4">
-              <span className="px-3 py-1 bg-gold/10 text-gold text-sm rounded-full">
-                Canvas 2D API
-              </span>
-              <span className="px-3 py-1 bg-gold/10 text-gold text-sm rounded-full">
-                Bezier Curves
-              </span>
-              <span className="px-3 py-1 bg-gold/10 text-gold text-sm rounded-full">
-                Radial Gradients
-              </span>
-              <span className="px-3 py-1 bg-gold/10 text-gold text-sm rounded-full">
-                requestAnimationFrame
-              </span>
-              <span className="px-3 py-1 bg-gold/10 text-gold text-sm rounded-full">
-                Mouse Interaction
-              </span>
+            <h3 className="font-heading text-lg text-gold mb-4">버전 비교</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full font-body text-sm">
+                <thead>
+                  <tr className="border-b border-charcoal/30">
+                    <th className="text-left py-3 px-2 text-cream/60">버전</th>
+                    <th className="text-center py-3 px-2 text-gold">테마</th>
+                    <th className="text-center py-3 px-2 text-gold">
+                      인터랙션
+                    </th>
+                    <th className="text-center py-3 px-2 text-gold">효과</th>
+                  </tr>
+                </thead>
+                <tbody className="text-cream/80">
+                  <tr className="border-b border-charcoal/20">
+                    <td className="py-3 px-2 font-medium">Original</td>
+                    <td className="text-center py-3 px-2">다크</td>
+                    <td className="text-center py-3 px-2">호버</td>
+                    <td className="text-center py-3 px-2">스포트라이트</td>
+                  </tr>
+                  <tr className="border-b border-charcoal/20">
+                    <td className="py-3 px-2 font-medium">V1 - Light</td>
+                    <td className="text-center py-3 px-2">라이트</td>
+                    <td className="text-center py-3 px-2">호버</td>
+                    <td className="text-center py-3 px-2">햇살</td>
+                  </tr>
+                  <tr className="border-b border-charcoal/20">
+                    <td className="py-3 px-2 font-medium">V2 - Animated</td>
+                    <td className="text-center py-3 px-2">퍼플</td>
+                    <td className="text-center py-3 px-2">호버 + 펄스</td>
+                    <td className="text-center py-3 px-2">호흡 + 네온</td>
+                  </tr>
+                  <tr className="border-b border-charcoal/20">
+                    <td className="py-3 px-2 font-medium">V3 - Particle</td>
+                    <td className="text-center py-3 px-2">스페이스</td>
+                    <td className="text-center py-3 px-2">호버 + 파티클</td>
+                    <td className="text-center py-3 px-2">음표 + 별</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3 px-2 font-medium">V4 - Interactive</td>
+                    <td className="text-center py-3 px-2">다이나믹</td>
+                    <td className="text-center py-3 px-2">클릭 연주</td>
+                    <td className="text-center py-3 px-2">웨이브 + 앙상블</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <ul className="font-body text-sm text-cream/60 space-y-1">
-              <li>• 스포트라이트와 스테이지 조명 효과</li>
-              <li>• 각 악기의 미묘한 흔들림 애니메이션</li>
-              <li>• 호버 시 현 진동 및 골드 하이라이트</li>
-              <li>• 광택(바니시) 효과로 사실적인 나무 질감</li>
-            </ul>
           </div>
         </div>
       </main>

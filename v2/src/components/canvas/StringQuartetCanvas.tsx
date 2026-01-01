@@ -1,10 +1,35 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useState } from "react";
+import { audioManager } from "@/lib/audio";
 
 interface StringQuartetCanvasProps {
   className?: string;
 }
+
+// Open string notes: Cello-G(Sol), Viola-D(Re), Violin2-A(La), Violin1-E(Mi)
+const INSTRUMENT_SOUNDS = {
+  violin1: {
+    // E5 (Mi) - highest open string
+    frequencies: [659.25, 493.88, 392, 329.63],
+    duration: 0.5,
+  },
+  violin2: {
+    // A4 (La) - second highest open string
+    frequencies: [440, 329.63, 261.63, 220],
+    duration: 0.5,
+  },
+  viola: {
+    // D4 (Re) - viola characteristic note
+    frequencies: [293.66, 220, 174.61, 146.83],
+    duration: 0.6,
+  },
+  cello: {
+    // G3 (Sol) - cello characteristic deep note
+    frequencies: [196, 146.83, 110, 98],
+    duration: 0.7,
+  },
+};
 
 interface InstrumentState {
   hover: boolean;
@@ -42,6 +67,8 @@ export default function StringQuartetCanvas({
   const timeRef = useRef<number>(0);
   const mouseRef = useRef({ x: 0, y: 0 });
   const [hoveredInstrument, setHoveredInstrument] = useState<string | null>(null);
+  const prevHoveredRef = useRef<string | null>(null);
+  const audioInitializedRef = useRef(false);
 
   const instrumentStates = useRef<Record<string, InstrumentState>>({
     violin1: { hover: false, sway: 0, stringVibration: [0, 0, 0, 0] },
@@ -49,6 +76,43 @@ export default function StringQuartetCanvas({
     viola: { hover: false, sway: 0, stringVibration: [0, 0, 0, 0] },
     cello: { hover: false, sway: 0, stringVibration: [0, 0, 0, 0] },
   });
+
+  // Play instrument-specific sound
+  const playInstrumentSound = useCallback(async (instrumentName: string) => {
+    if (!audioInitializedRef.current) {
+      await audioManager.init();
+      audioInitializedRef.current = true;
+    }
+
+    if (audioManager.isMuted()) return;
+
+    const sound = INSTRUMENT_SOUNDS[instrumentName as keyof typeof INSTRUMENT_SOUNDS];
+    if (!sound) return;
+
+    // Play a chord of the instrument's characteristic frequencies
+    const ctx = (audioManager as any).audioContext;
+    if (!ctx) return;
+
+    // Ensure audio context is running
+    if (ctx.state === "suspended") {
+      await ctx.resume();
+    }
+
+    // Play multiple notes in a subtle arpeggio
+    sound.frequencies.forEach((freq, i) => {
+      setTimeout(() => {
+        playPizzicatoNote(ctx, freq, sound.duration, 0.15 - i * 0.02);
+      }, i * 50); // Slight delay between notes for arpeggio effect
+    });
+  }, []);
+
+  // Trigger sound when hovering over a new instrument
+  useEffect(() => {
+    if (hoveredInstrument && hoveredInstrument !== prevHoveredRef.current) {
+      playInstrumentSound(hoveredInstrument);
+    }
+    prevHoveredRef.current = hoveredInstrument;
+  }, [hoveredInstrument, playInstrumentSound]);
 
   // Instrument positions (relative to canvas center)
   const getInstrumentPositions = useCallback((width: number, height: number) => {
@@ -736,4 +800,31 @@ function drawCelloStrings(
     );
     ctx.stroke();
   });
+}
+
+// Helper function to play a pizzicato-like sound
+function playPizzicatoNote(
+  ctx: AudioContext,
+  frequency: number,
+  duration: number,
+  volume: number
+) {
+  const oscillator = ctx.createOscillator();
+  const gainNode = ctx.createGain();
+
+  oscillator.connect(gainNode);
+  gainNode.connect(ctx.destination);
+
+  // Use triangle wave for warmer, string-like tone
+  oscillator.type = "triangle";
+  oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+
+  // Pizzicato envelope - quick attack, natural decay
+  const now = ctx.currentTime;
+  gainNode.gain.setValueAtTime(0, now);
+  gainNode.gain.linearRampToValueAtTime(volume, now + 0.01); // Quick attack
+  gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration); // Natural decay
+
+  oscillator.start(now);
+  oscillator.stop(now + duration + 0.1);
 }
