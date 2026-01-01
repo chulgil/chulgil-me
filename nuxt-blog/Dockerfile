@@ -1,4 +1,4 @@
-FROM node:10.11.0-alpine as builder
+FROM node:12.6-alpine as builder
 
 WORKDIR /app
 ENV NODE_ENV=production
@@ -14,7 +14,7 @@ ADD . ./
 RUN yarn build
 
 
-FROM node:10.11.0-alpine
+FROM node:12.6-alpine
 
 WORKDIR /app
 ENV HOST=0.0.0.0
