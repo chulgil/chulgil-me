@@ -20,16 +20,16 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
   const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
-    // Simulate loading progress
+    // Simulate loading progress (faster: ~1.2s total)
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           return 100;
         }
-        return prev + 2;
+        return prev + 5;
       });
-    }, 50);
+    }, 30);
 
     return () => clearInterval(interval);
   }, []);
@@ -49,11 +49,11 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
 
   useEffect(() => {
     if (progress >= 100) {
-      // Exit animation
+      // Exit animation (faster)
       setTimeout(() => {
         setIsExiting(true);
-        setTimeout(onComplete, 800);
-      }, 500);
+        setTimeout(onComplete, 400);
+      }, 200);
     }
   }, [progress, onComplete]);
 
@@ -62,7 +62,7 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
       className={`
         fixed inset-0 z-[10000] bg-ebony
         flex flex-col items-center justify-center
-        transition-all duration-800 ease-out
+        transition-all duration-400 ease-out
         ${isExiting ? "opacity-0 scale-110" : "opacity-100 scale-100"}
       `}
     >
