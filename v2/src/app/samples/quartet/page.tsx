@@ -76,9 +76,9 @@ const VERSIONS: Record<
     features: ["스포트라이트 효과", "바닥 반사", "호버 시 소리"],
   },
   v1: {
-    name: "V1 - Light",
-    description: "밝은 아이보리 테마 - 주간 콘서트",
-    features: ["따뜻한 햇살 효과", "부드러운 그림자", "밝은 색상"],
+    name: "V1 - Classic",
+    description: "사실적인 클래식 스타일 - 섬세한 목재 표현",
+    features: ["상세한 f홀", "바니시 광택", "전통 악기 형태", "콘서트홀 분위기"],
   },
   v2: {
     name: "V2 - Animated",
@@ -91,23 +91,23 @@ const VERSIONS: Record<
     ],
   },
   v3: {
-    name: "V3 - Particle",
-    description: "파티클 효과 - 떠다니는 음표들",
+    name: "V3 - Geometric",
+    description: "기하학적 스타일 - 다각형 악기 형태",
     features: [
-      "음표 파티클",
-      "별빛 배경",
-      "컬러 오라",
-      "소리 파동",
+      "팔각형/십각형 바디",
+      "다이아몬드 f홀",
+      "그리드 패턴",
+      "기하 파티클",
     ],
   },
   v4: {
-    name: "V4 - Interactive",
-    description: "인터랙티브 연주 - 클릭으로 연주",
+    name: "V4 - Futuristic",
+    description: "미래적 스타일 - 네온과 홀로그램",
     features: [
-      "클릭 연주",
-      "앙상블 모드",
-      "웨이브폼 시각화",
-      "리듬 펄스",
+      "네온 외곽선",
+      "홀로그램 효과",
+      "스캔 라인",
+      "LED 인디케이터",
     ],
   },
 };
@@ -298,10 +298,10 @@ export default function StringQuartetPage() {
                     <td className="text-center py-3 px-2">스포트라이트</td>
                   </tr>
                   <tr className="border-b border-charcoal/20">
-                    <td className="py-3 px-2 font-medium">V1 - Light</td>
-                    <td className="text-center py-3 px-2">라이트</td>
+                    <td className="py-3 px-2 font-medium">V1 - Classic</td>
+                    <td className="text-center py-3 px-2">웜톤</td>
                     <td className="text-center py-3 px-2">호버</td>
-                    <td className="text-center py-3 px-2">햇살</td>
+                    <td className="text-center py-3 px-2">사실적 목재</td>
                   </tr>
                   <tr className="border-b border-charcoal/20">
                     <td className="py-3 px-2 font-medium">V2 - Animated</td>
@@ -310,16 +310,16 @@ export default function StringQuartetPage() {
                     <td className="text-center py-3 px-2">호흡 + 네온</td>
                   </tr>
                   <tr className="border-b border-charcoal/20">
-                    <td className="py-3 px-2 font-medium">V3 - Particle</td>
-                    <td className="text-center py-3 px-2">스페이스</td>
-                    <td className="text-center py-3 px-2">호버 + 파티클</td>
-                    <td className="text-center py-3 px-2">음표 + 별</td>
+                    <td className="py-3 px-2 font-medium">V3 - Geometric</td>
+                    <td className="text-center py-3 px-2">퍼플</td>
+                    <td className="text-center py-3 px-2">호버 + 그리드</td>
+                    <td className="text-center py-3 px-2">다각형 + 기하</td>
                   </tr>
                   <tr>
-                    <td className="py-3 px-2 font-medium">V4 - Interactive</td>
-                    <td className="text-center py-3 px-2">다이나믹</td>
-                    <td className="text-center py-3 px-2">클릭 연주</td>
-                    <td className="text-center py-3 px-2">웨이브 + 앙상블</td>
+                    <td className="py-3 px-2 font-medium">V4 - Futuristic</td>
+                    <td className="text-center py-3 px-2">딥스페이스</td>
+                    <td className="text-center py-3 px-2">호버 + 스캔</td>
+                    <td className="text-center py-3 px-2">네온 + 홀로그램</td>
                   </tr>
                 </tbody>
               </table>

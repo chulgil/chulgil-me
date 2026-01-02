@@ -1,9 +1,8 @@
 "use client";
 
 /**
- * String Quartet V4 - Interactive Performance
- * 클릭으로 연주, 동기화된 앙상블 애니메이션,
- * 리듬 시각화, 웨이브폼 표현
+ * String Quartet V4 - Futuristic Style
+ * 미래적 미니멀리스트 현악기 - 네온 라인과 홀로그램 효과
  */
 
 import { useEffect, useRef, useCallback, useState } from "react";
@@ -13,304 +12,231 @@ interface StringQuartetV4Props {
   className?: string;
 }
 
-// Open string notes with harmonics
-const INSTRUMENT_DATA = {
-  violin1: {
-    note: "E",
-    frequencies: [659.25, 1318.5, 987.77, 1975.5], // E5 + harmonics
-    color: "#FFD700",
-    position: { xRatio: -0.225, yRatio: -0.05 },
-  },
-  violin2: {
-    note: "A",
-    frequencies: [440, 880, 660, 1320], // A4 + harmonics
-    color: "#FF8C00",
-    position: { xRatio: 0.225, yRatio: -0.05 },
-  },
-  viola: {
-    note: "D",
-    frequencies: [293.66, 587.33, 440, 880], // D4 + harmonics
-    color: "#9B59B6",
-    position: { xRatio: -0.075, yRatio: 0.05 },
-  },
-  cello: {
-    note: "G",
-    frequencies: [196, 392, 293.66, 587.33], // G3 + harmonics
-    color: "#E74C3C",
-    position: { xRatio: 0.1125, yRatio: 0.1125 },
+const INSTRUMENT_SOUNDS = {
+  violin1: { frequencies: [659.25, 493.88, 392, 329.63], duration: 0.5 },
+  violin2: { frequencies: [440, 329.63, 261.63, 220], duration: 0.5 },
+  viola: { frequencies: [293.66, 220, 174.61, 146.83], duration: 0.6 },
+  cello: { frequencies: [196, 146.83, 110, 98], duration: 0.7 },
+};
+
+const COLORS = {
+  bg: { deep: "#030012", mid: "#0a0520", glow: "#150a30" },
+  neon: { 
+    cyan: "#00f5ff", 
+    magenta: "#ff00ff", 
+    gold: "#ffd700", 
+    white: "#ffffff",
+    blue: "#4169e1"
   },
 };
 
 interface InstrumentState {
   hover: boolean;
-  playing: boolean;
   stringVibration: number[];
-  waveAmplitude: number;
-  playStartTime: number;
-}
-
-interface WavePoint {
-  x: number;
-  y: number;
-  amplitude: number;
-  frequency: number;
-  phase: number;
-  color: string;
+  breathPhase: number;
+  pulseIntensity: number;
+  scanLine: number;
 }
 
 export default function StringQuartetV4({ className = "" }: StringQuartetV4Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<number>(0);
   const timeRef = useRef<number>(0);
-  const [activeInstruments, setActiveInstruments] = useState<Set<string>>(new Set());
-  const [isEnsembleMode, setIsEnsembleMode] = useState(false);
-  const wavePointsRef = useRef<WavePoint[]>([]);
+  const [hoveredInstrument, setHoveredInstrument] = useState<string | null>(null);
+  const prevHoveredRef = useRef<string | null>(null);
 
   const instrumentStates = useRef<Record<string, InstrumentState>>({
-    violin1: { hover: false, playing: false, stringVibration: [0, 0, 0, 0], waveAmplitude: 0, playStartTime: 0 },
-    violin2: { hover: false, playing: false, stringVibration: [0, 0, 0, 0], waveAmplitude: 0, playStartTime: 0 },
-    viola: { hover: false, playing: false, stringVibration: [0, 0, 0, 0], waveAmplitude: 0, playStartTime: 0 },
-    cello: { hover: false, playing: false, stringVibration: [0, 0, 0, 0], waveAmplitude: 0, playStartTime: 0 },
+    violin1: { hover: false, stringVibration: [0, 0, 0, 0], breathPhase: 0, pulseIntensity: 0, scanLine: 0 },
+    violin2: { hover: false, stringVibration: [0, 0, 0, 0], breathPhase: Math.PI * 0.5, pulseIntensity: 0, scanLine: 0 },
+    viola: { hover: false, stringVibration: [0, 0, 0, 0], breathPhase: Math.PI, pulseIntensity: 0, scanLine: 0 },
+    cello: { hover: false, stringVibration: [0, 0, 0, 0], breathPhase: Math.PI * 1.5, pulseIntensity: 0, scanLine: 0 },
   });
 
-  const playInstrument = useCallback(async (name: string) => {
+  const playInstrumentSound = useCallback(async (name: string) => {
     await audioManager.init();
     if (audioManager.isMuted()) return;
-
-    const data = INSTRUMENT_DATA[name as keyof typeof INSTRUMENT_DATA];
-    if (!data) return;
-
-    const ctx = (audioManager as any).audioContext;
+    const sound = INSTRUMENT_SOUNDS[name as keyof typeof INSTRUMENT_SOUNDS];
+    if (!sound) return;
+    const ctx = (audioManager as unknown as { audioContext: AudioContext }).audioContext;
     if (!ctx || ctx.state === "suspended") return;
-
-    const state = instrumentStates.current[name];
-    state.playing = true;
-    state.playStartTime = timeRef.current;
-    state.waveAmplitude = 1;
-
-    // Add wave points
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const rect = canvas.getBoundingClientRect();
-      const pos = getPositions(rect.width, rect.height);
-      const p = pos[name as keyof typeof pos];
-
-      data.frequencies.forEach((freq, i) => {
-        wavePointsRef.current.push({
-          x: p.x,
-          y: p.y,
-          amplitude: 50 - i * 10,
-          frequency: freq / 500,
-          phase: Math.random() * Math.PI * 2,
-          color: data.color,
-        });
-      });
-    }
-
-    // Play arpeggio
-    data.frequencies.forEach((freq, i) => {
-      setTimeout(() => {
-        playNote(ctx, freq, 0.8, 0.12);
-      }, i * 80);
+    sound.frequencies.forEach((freq, i) => {
+      setTimeout(() => playPizzicato(ctx, freq, sound.duration, 0.12), i * 40);
     });
-
-    // Auto-stop after duration
-    setTimeout(() => {
-      state.playing = false;
-    }, 1500);
-
-    setActiveInstruments((prev) => new Set([...prev, name]));
-    setTimeout(() => {
-      setActiveInstruments((prev) => {
-        const next = new Set(prev);
-        next.delete(name);
-        return next;
-      });
-    }, 1500);
   }, []);
 
-  const playEnsemble = useCallback(async () => {
-    setIsEnsembleMode(true);
-
-    // Staggered entry like real quartet
-    const order = ["cello", "viola", "violin2", "violin1"];
-    order.forEach((name, i) => {
-      setTimeout(() => playInstrument(name), i * 400);
-    });
-
-    setTimeout(() => setIsEnsembleMode(false), 3000);
-  }, [playInstrument]);
+  useEffect(() => {
+    if (hoveredInstrument && hoveredInstrument !== prevHoveredRef.current) {
+      playInstrumentSound(hoveredInstrument);
+      instrumentStates.current[hoveredInstrument].pulseIntensity = 1;
+      instrumentStates.current[hoveredInstrument].scanLine = 0;
+    }
+    prevHoveredRef.current = hoveredInstrument;
+  }, [hoveredInstrument, playInstrumentSound]);
 
   const getPositions = useCallback((w: number, h: number) => {
     const cx = w / 2, cy = h / 2, s = Math.min(w, h) / 800;
     return {
-      violin1: { x: cx + INSTRUMENT_DATA.violin1.position.xRatio * w, y: cy + INSTRUMENT_DATA.violin1.position.yRatio * h, scale: s * 0.65, rot: -0.12 },
-      violin2: { x: cx + INSTRUMENT_DATA.violin2.position.xRatio * w, y: cy + INSTRUMENT_DATA.violin2.position.yRatio * h, scale: s * 0.65, rot: 0.12 },
-      viola: { x: cx + INSTRUMENT_DATA.viola.position.xRatio * w, y: cy + INSTRUMENT_DATA.viola.position.yRatio * h, scale: s * 0.75, rot: -0.08 },
-      cello: { x: cx + INSTRUMENT_DATA.cello.position.xRatio * w, y: cy + INSTRUMENT_DATA.cello.position.yRatio * h, scale: s * 1.0, rot: 0.04 },
+      violin1: { x: cx - 180 * s, y: cy - 40 * s, scale: s * 0.65, rot: -0.12 },
+      violin2: { x: cx + 180 * s, y: cy - 40 * s, scale: s * 0.65, rot: 0.12 },
+      viola: { x: cx - 60 * s, y: cy + 40 * s, scale: s * 0.75, rot: -0.08 },
+      cello: { x: cx + 90 * s, y: cy + 90 * s, scale: s * 1.0, rot: 0.04 },
     };
   }, []);
 
   const draw = useCallback((ctx: CanvasRenderingContext2D, w: number, h: number) => {
     const time = timeRef.current;
 
-    // Dynamic background based on ensemble mode
-    const bgGrad = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.7);
-    if (isEnsembleMode) {
-      bgGrad.addColorStop(0, "#2a1a3e");
-      bgGrad.addColorStop(0.5, "#1a0a2e");
-      bgGrad.addColorStop(1, "#0a0612");
-    } else {
-      bgGrad.addColorStop(0, "#1a1a2e");
-      bgGrad.addColorStop(1, "#0a0a12");
-    }
-    ctx.fillStyle = bgGrad;
+    // Deep space background
+    ctx.fillStyle = COLORS.bg.deep;
     ctx.fillRect(0, 0, w, h);
 
-    // Sound waves from active instruments
-    wavePointsRef.current = wavePointsRef.current.filter((wave) => {
-      wave.amplitude *= 0.97;
-      if (wave.amplitude < 1) return false;
-
-      ctx.beginPath();
-      for (let angle = 0; angle < Math.PI * 2; angle += 0.1) {
-        const wobble = Math.sin(angle * 8 + time * wave.frequency * 10) * 5;
-        const r = wave.amplitude * (1 + Math.sin(time * 5) * 0.1) + wobble;
-        const x = wave.x + Math.cos(angle) * r;
-        const y = wave.y + Math.sin(angle) * r;
-        if (angle === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.strokeStyle = `${wave.color}${Math.floor(wave.amplitude * 2).toString(16).padStart(2, "0")}`;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      wave.amplitude += 2; // Expand
-      return true;
-    });
-
-    // Waveform visualization at bottom
-    const waveformY = h - 60;
-    ctx.beginPath();
-    ctx.moveTo(0, waveformY);
-    for (let x = 0; x < w; x += 3) {
-      let amplitude = 0;
-      Object.entries(instrumentStates.current).forEach(([name, state]) => {
-        if (state.playing) {
-          const data = INSTRUMENT_DATA[name as keyof typeof INSTRUMENT_DATA];
-          const elapsed = time - state.playStartTime;
-          const decay = Math.exp(-elapsed * 0.5);
-          amplitude += Math.sin(x * 0.05 + time * data.frequencies[0] / 100) * 15 * decay;
-        }
-      });
-      ctx.lineTo(x, waveformY + amplitude);
-    }
-    ctx.lineTo(w, waveformY);
-    ctx.strokeStyle = "rgba(255, 215, 0, 0.4)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Grid lines (music staff style)
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+    // Animated grid lines
+    ctx.strokeStyle = "rgba(0, 245, 255, 0.03)";
     ctx.lineWidth = 1;
-    for (let y = h * 0.3; y < h * 0.75; y += (h * 0.45) / 5) {
+    for (let x = 0; x < w; x += 40) {
+      const offset = Math.sin(time * 0.5 + x * 0.01) * 3;
       ctx.beginPath();
-      ctx.moveTo(w * 0.1, y);
-      ctx.lineTo(w * 0.9, y);
+      ctx.moveTo(x + offset, 0);
+      ctx.lineTo(x + offset, h);
       ctx.stroke();
     }
+    for (let y = 0; y < h; y += 40) {
+      const offset = Math.cos(time * 0.5 + y * 0.01) * 3;
+      ctx.beginPath();
+      ctx.moveTo(0, y + offset);
+      ctx.lineTo(w, y + offset);
+      ctx.stroke();
+    }
+
+    // Radial glow from center
+    const centerGlow = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.5);
+    centerGlow.addColorStop(0, "rgba(0, 245, 255, 0.05)");
+    centerGlow.addColorStop(0.5, "rgba(255, 0, 255, 0.02)");
+    centerGlow.addColorStop(1, "transparent");
+    ctx.fillStyle = centerGlow;
+    ctx.fillRect(0, 0, w, h);
+
+    // Holographic wave floor
+    ctx.beginPath();
+    for (let x = 0; x < w; x += 3) {
+      const waveY = h * 0.75 + Math.sin(x * 0.03 + time * 3) * 8 + Math.sin(x * 0.01 + time) * 15;
+      if (x === 0) ctx.moveTo(x, waveY);
+      else ctx.lineTo(x, waveY);
+    }
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+    ctx.closePath();
+    const floorGrad = ctx.createLinearGradient(0, h * 0.7, 0, h);
+    floorGrad.addColorStop(0, "rgba(0, 245, 255, 0.1)");
+    floorGrad.addColorStop(1, "rgba(255, 0, 255, 0.05)");
+    ctx.fillStyle = floorGrad;
+    ctx.fill();
 
     const pos = getPositions(w, h);
+
+    // Laser connection lines
+    const posArr = Object.entries(pos);
+    for (let i = 0; i < posArr.length; i++) {
+      for (let j = i + 1; j < posArr.length; j++) {
+        const [, p1] = posArr[i];
+        const [, p2] = posArr[j];
+        
+        const gradient = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
+        gradient.addColorStop(0, "rgba(0, 245, 255, " + (0.2 + Math.sin(time * 2 + i) * 0.1) + ")");
+        gradient.addColorStop(0.5, "rgba(255, 0, 255, " + (0.15 + Math.sin(time * 2 + j) * 0.1) + ")");
+        gradient.addColorStop(1, "rgba(0, 245, 255, " + (0.2 + Math.sin(time * 2 + i + j) * 0.1) + ")");
+        
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        
+        // Curved laser beam
+        const cpX = (p1.x + p2.x) / 2 + Math.sin(time * 2 + i + j) * 30;
+        const cpY = (p1.y + p2.y) / 2 - 40 + Math.cos(time * 3) * 10;
+        ctx.quadraticCurveTo(cpX, cpY, p2.x, p2.y);
+        ctx.stroke();
+        
+        // Beam glow
+        ctx.shadowColor = COLORS.neon.cyan;
+        ctx.shadowBlur = 10;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+    }
 
     // Draw instruments
     Object.entries(pos).forEach(([name, p]) => {
       const state = instrumentStates.current[name];
-      const data = INSTRUMENT_DATA[name as keyof typeof INSTRUMENT_DATA];
       const isViola = name === "viola";
       const isCello = name === "cello";
 
-      // Decay wave amplitude
-      state.waveAmplitude *= 0.95;
+      state.breathPhase += 0.015;
+      state.scanLine = (state.scanLine + 2) % 300;
+      const breathScale = 1 + Math.sin(state.breathPhase) * 0.015;
+      state.pulseIntensity *= 0.96;
 
       ctx.save();
       ctx.translate(p.x, p.y);
 
-      // Playing animation - bounce
-      const playBounce = state.playing ? Math.sin(time * 15) * 5 * state.waveAmplitude : 0;
-      ctx.translate(0, playBounce);
+      const wobble = Math.sin(time * 1.5 + state.breathPhase) * 0.015;
+      ctx.rotate(p.rot + wobble);
 
-      ctx.rotate(p.rot + Math.sin(time * (state.playing ? 6 : 1.5)) * (state.playing ? 0.05 : 0.015));
-      ctx.scale(p.scale * (isCello ? 1 : isViola ? 1.1 : 1), p.scale * (isCello ? 1 : isViola ? 1.1 : 1));
+      const scale = p.scale * breathScale * (isCello ? 1 : isViola ? 1.1 : 1);
+      ctx.scale(scale, scale);
 
-      // Glow effect when playing
-      if (state.playing || state.hover) {
-        const glowIntensity = state.playing ? 0.8 : 0.4;
-        ctx.shadowColor = data.color;
-        ctx.shadowBlur = 40 * glowIntensity;
-      }
-
-      // Rhythmic pulse ring
-      if (state.playing) {
-        const elapsed = time - state.playStartTime;
-        for (let i = 0; i < 3; i++) {
-          const ringRadius = (elapsed * 100 + i * 40) % 150;
-          const ringAlpha = 0.4 * (1 - ringRadius / 150);
-          ctx.beginPath();
-          ctx.arc(0, 0, ringRadius, 0, Math.PI * 2);
-          ctx.strokeStyle = `${data.color}${Math.floor(ringAlpha * 255).toString(16).padStart(2, "0")}`;
-          ctx.lineWidth = 3;
-          ctx.stroke();
-        }
-      }
-
-      // Body
       if (isCello) {
-        drawInteractiveCello(ctx, data.color, state, time);
+        drawFuturisticCello(ctx, time, state);
       } else {
-        drawInteractiveViolin(ctx, data.color, state, time, isViola);
+        drawFuturisticViolin(ctx, time, state, isViola);
       }
-
-      ctx.shadowBlur = 0;
-
-      // Note indicator
-      ctx.font = "bold 24px 'Playfair Display', serif";
-      ctx.fillStyle = state.playing ? data.color : "rgba(255, 255, 255, 0.3)";
-      ctx.textAlign = "center";
-      const noteY = isCello ? -180 : -140;
-      ctx.fillText(data.note, 0, noteY);
 
       ctx.restore();
     });
 
-    // Ensemble button
-    const btnX = w / 2;
-    const btnY = h - 30;
-    const btnW = 140;
-    const btnH = 36;
+    // Holographic label
+    if (hoveredInstrument) {
+      const p = pos[hoveredInstrument as keyof typeof pos];
+      const labels: Record<string, string> = {
+        violin1: "[ VIOLIN-01 ]", violin2: "[ VIOLIN-02 ]", viola: "[ VIOLA ]", cello: "[ CELLO ]",
+      };
 
-    ctx.fillStyle = isEnsembleMode
-      ? "rgba(255, 215, 0, 0.3)"
-      : "rgba(255, 255, 255, 0.1)";
-    ctx.beginPath();
-    ctx.roundRect(btnX - btnW / 2, btnY - btnH / 2, btnW, btnH, 18);
-    ctx.fill();
+      const labelY = p.y - 120 * p.scale + Math.sin(time * 4) * 2;
 
-    ctx.strokeStyle = isEnsembleMode ? "#FFD700" : "rgba(255, 255, 255, 0.3)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+      // Glitch effect
+      const glitchOffset = Math.random() > 0.95 ? (Math.random() - 0.5) * 4 : 0;
 
-    ctx.font = "bold 13px 'Playfair Display', serif";
-    ctx.fillStyle = isEnsembleMode ? "#FFD700" : "#fff";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("♫ Play Ensemble ♫", btnX, btnY);
+      ctx.shadowColor = COLORS.neon.cyan;
+      ctx.shadowBlur = 20;
+      ctx.font = "bold 12px 'Courier New', monospace";
+      ctx.fillStyle = COLORS.neon.cyan;
+      ctx.textAlign = "center";
+      ctx.fillText(labels[hoveredInstrument], p.x + glitchOffset, labelY);
+      
+      // Secondary glitch layer
+      if (glitchOffset !== 0) {
+        ctx.fillStyle = COLORS.neon.magenta;
+        ctx.globalAlpha = 0.5;
+        ctx.fillText(labels[hoveredInstrument], p.x - glitchOffset, labelY);
+        ctx.globalAlpha = 1;
+      }
+      ctx.shadowBlur = 0;
+    }
 
-    // Instructions
-    ctx.font = "12px 'Playfair Display', serif";
-    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-    ctx.fillText("Click any instrument to play • Click button for full quartet", w / 2, 25);
-  }, [getPositions, isEnsembleMode]);
+    // Data stream particles
+    for (let i = 0; i < 30; i++) {
+      const px = (w * 0.1 + (i * w * 0.8) / 30 + time * 20 + i * 50) % w;
+      const py = (h * 0.2 + Math.sin(time * 0.3 + i * 0.5) * h * 0.4);
+      const alpha = 0.4 + Math.sin(time * 3 + i) * 0.3;
+
+      ctx.fillStyle = i % 2 === 0 
+        ? "rgba(0, 245, 255, " + alpha + ")" 
+        : "rgba(255, 0, 255, " + alpha + ")";
+      
+      // Binary-like rectangles
+      ctx.fillRect(px, py, 2, 4 + Math.sin(time + i) * 2);
+    }
+  }, [getPositions, hoveredInstrument]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -332,50 +258,26 @@ export default function StringQuartetV4({ className = "" }: StringQuartetV4Props
       const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
       const pos = getPositions(rect.width, rect.height);
+      let hovered: string | null = null;
 
       Object.entries(pos).forEach(([name, p]) => {
         const dx = mx - p.x, dy = my - p.y;
         const r = name === "cello" ? 90 * p.scale : 60 * p.scale;
         instrumentStates.current[name].hover = Math.sqrt(dx * dx + dy * dy) < r;
+        if (instrumentStates.current[name].hover) hovered = name;
       });
+      setHoveredInstrument(hovered);
     };
-
-    const handleClick = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-      const pos = getPositions(rect.width, rect.height);
-
-      // Check ensemble button
-      const btnX = rect.width / 2;
-      const btnY = rect.height - 30;
-      if (Math.abs(mx - btnX) < 70 && Math.abs(my - btnY) < 18) {
-        playEnsemble();
-        return;
-      }
-
-      // Check instruments
-      Object.entries(pos).forEach(([name, p]) => {
-        const dx = mx - p.x, dy = my - p.y;
-        const r = name === "cello" ? 90 * p.scale : 60 * p.scale;
-        if (Math.sqrt(dx * dx + dy * dy) < r) {
-          playInstrument(name);
-        }
-      });
-    };
-
     canvas.addEventListener("mousemove", handleMouseMove);
-    canvas.addEventListener("click", handleClick);
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
       timeRef.current += 0.016;
-
       Object.values(instrumentStates.current).forEach((s) => {
         s.stringVibration = s.stringVibration.map((v, i) =>
-          s.playing ? Math.sin(timeRef.current * (15 + i * 5)) * 4 : v * 0.88
+          s.hover ? Math.sin(timeRef.current * (10 + i * 3)) * 3 : v * 0.9
         );
       });
-
       draw(ctx, canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
     };
     animate();
@@ -384,207 +286,327 @@ export default function StringQuartetV4({ className = "" }: StringQuartetV4Props
       cancelAnimationFrame(frameRef.current);
       window.removeEventListener("resize", resize);
       canvas.removeEventListener("mousemove", handleMouseMove);
-      canvas.removeEventListener("click", handleClick);
     };
-  }, [draw, getPositions, playInstrument, playEnsemble]);
+  }, [draw, getPositions]);
 
-  return <canvas ref={canvasRef} className={`w-full h-full min-h-[400px] cursor-pointer ${className}`} />;
+  return <canvas ref={canvasRef} className={"w-full h-full min-h-[400px] cursor-pointer " + className} />;
 }
 
-function drawInteractiveViolin(
+function drawFuturisticViolin(
   ctx: CanvasRenderingContext2D,
-  color: string,
-  state: InstrumentState,
   time: number,
+  state: InstrumentState,
   isViola: boolean
 ) {
-  // Body shape
+  const scale = isViola ? 1.1 : 1;
+  const glowIntensity = state.hover ? 1 : 0.4;
+  const neonColor = isViola ? COLORS.neon.magenta : COLORS.neon.cyan;
+
+  // Outer wireframe body - sleek angular shape
   ctx.beginPath();
-  ctx.moveTo(0, -110);
-  ctx.bezierCurveTo(42, -110, 55, -75, 50, -38);
-  ctx.bezierCurveTo(45, -12, 36, 8, 44, 28);
-  ctx.bezierCurveTo(55, 55, 65, 92, 46, 115);
-  ctx.bezierCurveTo(22, 135, -22, 135, -46, 115);
-  ctx.bezierCurveTo(-65, 92, -55, 55, -44, 28);
-  ctx.bezierCurveTo(-36, 8, -45, -12, -50, -38);
-  ctx.bezierCurveTo(-55, -75, -42, -110, 0, -110);
+  ctx.moveTo(0, -100 * scale); // Top point
+  ctx.lineTo(35 * scale, -60 * scale); // Upper right
+  ctx.lineTo(45 * scale, 0); // Right wide
+  ctx.lineTo(40 * scale, 50 * scale); // Lower right curve
+  ctx.lineTo(25 * scale, 90 * scale); // Bottom right
+  ctx.lineTo(0, 100 * scale); // Bottom point
+  ctx.lineTo(-25 * scale, 90 * scale); // Bottom left
+  ctx.lineTo(-40 * scale, 50 * scale); // Lower left curve
+  ctx.lineTo(-45 * scale, 0); // Left wide
+  ctx.lineTo(-35 * scale, -60 * scale); // Upper left
   ctx.closePath();
 
-  // Gradient with color influence
-  const bodyGrad = ctx.createRadialGradient(-12, -25, 0, 0, 0, 90);
-  if (state.playing) {
-    bodyGrad.addColorStop(0, "#FFE4B5");
-    bodyGrad.addColorStop(0.5, color);
-    bodyGrad.addColorStop(1, "#5D3A1A");
-  } else {
-    bodyGrad.addColorStop(0, "#DEB887");
-    bodyGrad.addColorStop(0.5, isViola ? "#6B4423" : "#CD853F");
-    bodyGrad.addColorStop(1, "#5D3A1A");
-  }
-  ctx.fillStyle = bodyGrad;
+  // Holographic fill
+  const holoGrad = ctx.createLinearGradient(-50, -100, 50, 100);
+  holoGrad.addColorStop(0, "rgba(0, 245, 255, " + (0.05 + state.pulseIntensity * 0.1) + ")");
+  holoGrad.addColorStop(0.5, "rgba(255, 0, 255, " + (0.03 + state.pulseIntensity * 0.05) + ")");
+  holoGrad.addColorStop(1, "rgba(0, 245, 255, " + (0.05 + state.pulseIntensity * 0.1) + ")");
+  ctx.fillStyle = holoGrad;
   ctx.fill();
 
-  // Shine
-  const shine = ctx.createRadialGradient(-12, -25, 0, 0, 0, 90);
-  shine.addColorStop(0, "rgba(255, 255, 255, 0.4)");
-  shine.addColorStop(1, "transparent");
-  ctx.fillStyle = shine;
-  ctx.fill();
+  // Neon outline
+  ctx.strokeStyle = neonColor;
+  ctx.lineWidth = state.hover ? 2.5 : 1.5;
+  ctx.shadowColor = neonColor;
+  ctx.shadowBlur = 15 * glowIntensity;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
 
-  // Animated border when playing
-  if (state.playing) {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
-    ctx.setLineDash([10, 5]);
-    ctx.lineDashOffset = -time * 50;
+  // Inner tech pattern - circuit lines
+  ctx.strokeStyle = "rgba(255, 255, 255, " + (0.2 + state.pulseIntensity * 0.3) + ")";
+  ctx.lineWidth = 0.5;
+  
+  // Horizontal scan lines
+  for (let y = -80; y <= 80; y += 15) {
+    const width = 30 - Math.abs(y) * 0.3;
+    ctx.beginPath();
+    ctx.moveTo(-width * scale, y * scale);
+    ctx.lineTo(width * scale, y * scale);
     ctx.stroke();
-    ctx.setLineDash([]);
   }
 
-  // F-holes
-  ctx.strokeStyle = state.playing ? color : "#2F1810";
-  ctx.lineWidth = 2;
+  // Sound holes - angular slots
+  ctx.fillStyle = neonColor;
+  ctx.globalAlpha = 0.6 + Math.sin(time * 5) * 0.2;
   [-1, 1].forEach((side) => {
     ctx.beginPath();
-    ctx.moveTo(side * 18, -22);
-    ctx.bezierCurveTo(side * 22, -4, side * 22, 22, side * 18, 40);
-    ctx.stroke();
+    ctx.moveTo(side * 12, -25);
+    ctx.lineTo(side * 18, -15);
+    ctx.lineTo(side * 18, 35);
+    ctx.lineTo(side * 12, 45);
+    ctx.lineTo(side * 12, -25);
+    ctx.fill();
   });
+  ctx.globalAlpha = 1;
 
-  // Bridge & Neck
-  ctx.fillStyle = "#4a3728";
-  ctx.fillRect(-20, 48, 40, 6);
-  ctx.fillRect(-7, -175, 14, 75);
-  ctx.fillStyle = "#2F1810";
-  ctx.fillRect(-9, -165, 18, 60);
+  // Minimalist bridge - thin line
+  ctx.strokeStyle = COLORS.neon.white;
+  ctx.lineWidth = 2;
+  ctx.shadowColor = COLORS.neon.white;
+  ctx.shadowBlur = 5;
+  ctx.beginPath();
+  ctx.moveTo(-20, 55);
+  ctx.lineTo(20, 55);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
 
-  // Strings with intense vibration when playing
-  const stringX = [-6, -2, 2, 6];
+  // Sleek neck - thin rectangle
+  ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+  ctx.fillRect(-5, -180, 10, 90);
+  
+  ctx.strokeStyle = neonColor;
+  ctx.lineWidth = 1;
+  ctx.shadowColor = neonColor;
+  ctx.shadowBlur = 8;
+  ctx.strokeRect(-5, -180, 10, 90);
+  ctx.shadowBlur = 0;
+
+  // LED indicators on neck
+  for (let i = 0; i < 5; i++) {
+    const y = -170 + i * 15;
+    const active = (Math.floor(time * 5) + i) % 5 === 0;
+    ctx.fillStyle = active ? COLORS.neon.cyan : "rgba(0, 245, 255, 0.2)";
+    ctx.beginPath();
+    ctx.arc(0, y, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Minimal scroll - small triangle
+  ctx.fillStyle = neonColor;
+  ctx.shadowColor = neonColor;
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.moveTo(0, -195);
+  ctx.lineTo(8, -180);
+  ctx.lineTo(-8, -180);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Energy strings
+  const stringX = [-4, -1.5, 1.5, 4];
   stringX.forEach((x, i) => {
     const vib = state.stringVibration[i] || 0;
+    const stringColor = i % 2 === 0 ? COLORS.neon.cyan : COLORS.neon.magenta;
 
-    // Glow trail when vibrating
-    if (state.playing && Math.abs(vib) > 1) {
-      ctx.strokeStyle = `${color}40`;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(x, -130);
-      for (let y = -130; y <= 100; y += 5) {
-        const wave = Math.sin((y + time * 80) * 0.2) * vib;
-        ctx.lineTo(x + wave, y);
-      }
-      ctx.stroke();
-    }
+    ctx.strokeStyle = stringColor;
+    ctx.lineWidth = state.hover ? 1.5 : 1;
+    ctx.shadowColor = stringColor;
+    ctx.shadowBlur = state.hover ? 8 : 3;
 
-    // Main string
-    ctx.strokeStyle = state.playing ? color : `rgba(180, 180, 180, ${0.9 - i * 0.1})`;
-    ctx.lineWidth = state.playing ? 1.5 : 1 - i * 0.1;
     ctx.beginPath();
     ctx.moveTo(x, -130);
-    for (let y = -130; y <= 100; y += 5) {
-      const wave = Math.sin((y + time * 60) * 0.15) * vib * 0.5;
+    for (let y = -130; y <= 90; y += 4) {
+      const wave = Math.sin((y + time * 40) * 0.12) * vib * 0.6;
       ctx.lineTo(x + wave, y);
     }
     ctx.stroke();
+    ctx.shadowBlur = 0;
   });
+
+  // Scan line effect on hover
+  if (state.hover) {
+    const scanY = -100 + (state.scanLine % 200);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-50, scanY);
+    ctx.lineTo(50, scanY);
+    ctx.stroke();
+  }
 }
 
-function drawInteractiveCello(
+function drawFuturisticCello(
   ctx: CanvasRenderingContext2D,
-  color: string,
-  state: InstrumentState,
-  time: number
+  time: number,
+  state: InstrumentState
 ) {
+  const glowIntensity = state.hover ? 1 : 0.4;
+
+  // Angular cello body
   ctx.beginPath();
-  ctx.moveTo(0, -140);
-  ctx.bezierCurveTo(55, -140, 72, -92, 68, -46);
-  ctx.bezierCurveTo(63, -18, 50, 9, 58, 42);
-  ctx.bezierCurveTo(72, 78, 86, 120, 63, 152);
-  ctx.bezierCurveTo(36, 180, -36, 180, -63, 152);
-  ctx.bezierCurveTo(-86, 120, -72, 78, -58, 42);
-  ctx.bezierCurveTo(-50, 9, -63, -18, -68, -46);
-  ctx.bezierCurveTo(-72, -92, -55, -140, 0, -140);
+  ctx.moveTo(0, -130); // Top
+  ctx.lineTo(45, -90); // Upper right
+  ctx.lineTo(60, -20); // Right shoulder
+  ctx.lineTo(55, 40); // Right waist
+  ctx.lineTo(65, 100); // Right hip
+  ctx.lineTo(40, 140); // Lower right
+  ctx.lineTo(0, 155); // Bottom
+  ctx.lineTo(-40, 140); // Lower left
+  ctx.lineTo(-65, 100); // Left hip
+  ctx.lineTo(-55, 40); // Left waist
+  ctx.lineTo(-60, -20); // Left shoulder
+  ctx.lineTo(-45, -90); // Upper left
   ctx.closePath();
 
-  const bodyGrad = ctx.createRadialGradient(-18, -35, 0, 0, 0, 130);
-  if (state.playing) {
-    bodyGrad.addColorStop(0, "#FFE4B5");
-    bodyGrad.addColorStop(0.5, color);
-    bodyGrad.addColorStop(1, "#5D3A1A");
-  } else {
-    bodyGrad.addColorStop(0, "#DEB887");
-    bodyGrad.addColorStop(0.5, "#B8860B");
-    bodyGrad.addColorStop(1, "#6B4423");
-  }
-  ctx.fillStyle = bodyGrad;
+  // Holographic fill
+  const holoGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 150);
+  holoGrad.addColorStop(0, "rgba(255, 0, 255, " + (0.08 + state.pulseIntensity * 0.1) + ")");
+  holoGrad.addColorStop(0.5, "rgba(0, 245, 255, " + (0.04 + state.pulseIntensity * 0.05) + ")");
+  holoGrad.addColorStop(1, "rgba(255, 0, 255, " + (0.06 + state.pulseIntensity * 0.1) + ")");
+  ctx.fillStyle = holoGrad;
   ctx.fill();
 
-  const shine = ctx.createRadialGradient(-18, -35, 0, 0, 0, 130);
-  shine.addColorStop(0, "rgba(255, 255, 255, 0.35)");
-  shine.addColorStop(1, "transparent");
-  ctx.fillStyle = shine;
-  ctx.fill();
+  // Dual-color neon outline
+  ctx.strokeStyle = COLORS.neon.magenta;
+  ctx.lineWidth = state.hover ? 3 : 2;
+  ctx.shadowColor = COLORS.neon.magenta;
+  ctx.shadowBlur = 20 * glowIntensity;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
 
-  if (state.playing) {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
-    ctx.setLineDash([12, 6]);
-    ctx.lineDashOffset = -time * 40;
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
-
-  ctx.strokeStyle = state.playing ? color : "#2F1810";
-  ctx.lineWidth = 2.5;
-  [-1, 1].forEach((side) => {
-    ctx.beginPath();
-    ctx.moveTo(side * 25, -28);
-    ctx.bezierCurveTo(side * 30, 0, side * 30, 35, side * 25, 62);
-    ctx.stroke();
-  });
-
-  ctx.fillStyle = "#4a3728";
-  ctx.fillRect(-28, 68, 56, 8);
-  ctx.fillRect(-10, -230, 20, 100);
-  ctx.fillStyle = "#2F1810";
-  ctx.fillRect(-12, -220, 24, 75);
-
-  ctx.strokeStyle = "#A9A9A9";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(0, 165);
-  ctx.lineTo(0, 210);
+  // Inner glow outline
+  ctx.strokeStyle = "rgba(0, 245, 255, 0.3)";
+  ctx.lineWidth = 1;
   ctx.stroke();
 
-  const stringX = [-9, -3, 3, 9];
+  // Tech circuit pattern
+  ctx.strokeStyle = "rgba(255, 255, 255, " + (0.15 + state.pulseIntensity * 0.2) + ")";
+  ctx.lineWidth = 0.5;
+  for (let y = -110; y <= 130; y += 20) {
+    const width = 45 - Math.abs(y) * 0.25;
+    ctx.beginPath();
+    ctx.moveTo(-width, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+  }
+
+  // Glowing sound holes - vertical slots
+  ctx.fillStyle = COLORS.neon.cyan;
+  ctx.globalAlpha = 0.5 + Math.sin(time * 4) * 0.2;
+  [-1, 1].forEach((side) => {
+    ctx.beginPath();
+    ctx.moveTo(side * 18, -35);
+    ctx.lineTo(side * 26, -20);
+    ctx.lineTo(side * 26, 50);
+    ctx.lineTo(side * 18, 65);
+    ctx.closePath();
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // Minimalist bridge
+  ctx.strokeStyle = COLORS.neon.white;
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = COLORS.neon.white;
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.moveTo(-28, 80);
+  ctx.lineTo(28, 80);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Angular neck
+  ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+  ctx.beginPath();
+  ctx.moveTo(-8, -220);
+  ctx.lineTo(8, -220);
+  ctx.lineTo(10, -130);
+  ctx.lineTo(-10, -130);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = COLORS.neon.magenta;
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = COLORS.neon.magenta;
+  ctx.shadowBlur = 10;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // LED position markers
+  for (let i = 0; i < 6; i++) {
+    const y = -210 + i * 12;
+    const active = (Math.floor(time * 4) + i) % 6 === 0;
+    ctx.fillStyle = active ? COLORS.neon.magenta : "rgba(255, 0, 255, 0.2)";
+    ctx.beginPath();
+    ctx.arc(0, y, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Scroll - diamond shape
+  ctx.fillStyle = COLORS.neon.magenta;
+  ctx.shadowColor = COLORS.neon.magenta;
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.moveTo(0, -245);
+  ctx.lineTo(10, -230);
+  ctx.lineTo(0, -215);
+  ctx.lineTo(-10, -230);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Futuristic endpin - laser point
+  ctx.strokeStyle = COLORS.neon.cyan;
+  ctx.lineWidth = 2;
+  ctx.shadowColor = COLORS.neon.cyan;
+  ctx.shadowBlur = 15;
+  ctx.beginPath();
+  ctx.moveTo(0, 160);
+  ctx.lineTo(0, 200);
+  ctx.stroke();
+  
+  // Endpin glow point
+  ctx.fillStyle = COLORS.neon.cyan;
+  ctx.beginPath();
+  ctx.arc(0, 200, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Energy strings with glow
+  const stringX = [-7, -2.5, 2.5, 7];
   stringX.forEach((x, i) => {
     const vib = state.stringVibration[i] || 0;
+    const stringColor = i % 2 === 0 ? COLORS.neon.magenta : COLORS.neon.cyan;
 
-    if (state.playing && Math.abs(vib) > 1) {
-      ctx.strokeStyle = `${color}40`;
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.moveTo(x, -210);
-      for (let y = -210; y <= 140; y += 8) {
-        const wave = Math.sin((y + time * 60) * 0.12) * vib * 1.3;
-        ctx.lineTo(x + wave, y);
-      }
-      ctx.stroke();
-    }
+    ctx.strokeStyle = stringColor;
+    ctx.lineWidth = state.hover ? 1.8 : 1.2;
+    ctx.shadowColor = stringColor;
+    ctx.shadowBlur = state.hover ? 10 : 4;
 
-    ctx.strokeStyle = state.playing ? color : `rgba(160, 160, 160, ${0.9 - i * 0.1})`;
-    ctx.lineWidth = state.playing ? 1.8 : 1.4 - i * 0.15;
     ctx.beginPath();
-    ctx.moveTo(x, -210);
-    for (let y = -210; y <= 140; y += 8) {
-      const wave = Math.sin((y + time * 40) * 0.1) * vib * 0.6;
+    ctx.moveTo(x, -200);
+    for (let y = -200; y <= 140; y += 5) {
+      const wave = Math.sin((y + time * 35) * 0.1) * vib * 0.7;
       ctx.lineTo(x + wave, y);
     }
     ctx.stroke();
+    ctx.shadowBlur = 0;
   });
+
+  // Scan line effect
+  if (state.hover) {
+    const scanY = -130 + (state.scanLine % 290);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-70, scanY);
+    ctx.lineTo(70, scanY);
+    ctx.stroke();
+  }
 }
 
-function playNote(ctx: AudioContext, freq: number, dur: number, vol: number) {
+function playPizzicato(ctx: AudioContext, freq: number, dur: number, vol: number) {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.connect(gain);
@@ -592,7 +614,7 @@ function playNote(ctx: AudioContext, freq: number, dur: number, vol: number) {
   osc.type = "triangle";
   osc.frequency.setValueAtTime(freq, ctx.currentTime);
   gain.gain.setValueAtTime(0, ctx.currentTime);
-  gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 0.02);
+  gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
   osc.start();
   osc.stop(ctx.currentTime + dur + 0.1);
