@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import SectionHeader from "@/components/ui/SectionHeader";
 
 const skillCategories = [
   {
@@ -31,42 +31,16 @@ const skillCategories = [
 ];
 
 export default function Skills() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const cardsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Cards stagger animation
-      gsap.from(cardsRef.current?.children || [], {
-        y: 100,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.15,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 60%",
-          toggleActions: "play none none reverse",
-        },
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  const cardsRef = useScrollAnimation<HTMLDivElement>({
+    start: "top 60%",
+    yOffset: 100,
+    stagger: 0.15,
+  });
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative min-h-screen flex items-center bg-ivory py-24"
-    >
+    <section className="relative min-h-screen flex items-center bg-ivory py-24">
       <div className="section-container">
-        {/* Section Title */}
-        <div className="flex items-center gap-4 mb-8">
-          <span className="text-2xl text-gold">&#9833;</span>
-          <h2 className="font-heading text-4xl text-ebony">기술 스택</h2>
-          <div className="flex-1 h-px bg-charcoal/20" />
-          <span className="text-2xl text-gold">&#9834;</span>
-        </div>
+        <SectionHeader title="기술 스택" className="mb-8" />
 
         {/* Conductor Stand */}
         <div className="text-center mb-16">

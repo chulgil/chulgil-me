@@ -133,6 +133,8 @@ export default function ViolinCanvas({ className = "" }: ViolinCanvasProps) {
       ref={canvasRef}
       className={`w-full h-full min-h-[400px] ${className}`}
       style={{ touchAction: "none" }}
+      role="img"
+      aria-label="Interactive 3D violin visualization"
     />
   );
 }

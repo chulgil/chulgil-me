@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { gsap } from "@/lib/gsap";
 
 export default function CustomCursor() {
@@ -10,108 +10,113 @@ export default function CustomCursor() {
   const [isClicking, setIsClicking] = useState(false);
   const [cursorText, setCursorText] = useState("");
 
-  useEffect(() => {
-    const cursor = cursorRef.current;
-    const follower = followerRef.current;
-    if (!cursor || !follower) return;
+  // Track attached elements to prevent duplicate listeners
+  const attachedElementsRef = useRef<WeakSet<Element>>(new WeakSet());
 
-    // Hide default cursor
-    document.body.style.cursor = "none";
+  // Memoized hover handlers
+  const handleMouseEnter = useCallback((e: Event) => {
+    const target = e.target as HTMLElement;
+    setIsHovering(true);
+    const text = target.dataset.cursorText;
+    if (text) setCursorText(text);
+  }, []);
 
-    const onMouseMove = (e: MouseEvent) => {
-      // Main cursor follows immediately (no animation delay)
-      gsap.set(cursor, {
-        x: e.clientX,
-        y: e.clientY,
-      });
+  const handleMouseLeave = useCallback(() => {
+    setIsHovering(false);
+    setCursorText("");
+  }, []);
 
-      // Follower has smooth delay for visual effect
-      gsap.to(follower, {
-        x: e.clientX,
-        y: e.clientY,
-        duration: 0.15,
-        ease: "power2.out",
-      });
-    };
-
-    const onMouseDown = () => setIsClicking(true);
-    const onMouseUp = () => setIsClicking(false);
-
-    // Handle hover states
-    const handleMouseEnter = (e: Event) => {
-      const target = e.target as HTMLElement;
-      setIsHovering(true);
-
-      // Check for data attributes
-      const text = target.dataset.cursorText;
-      if (text) setCursorText(text);
-    };
-
-    const handleMouseLeave = () => {
-      setIsHovering(false);
-      setCursorText("");
-    };
-
-    // Add event listeners
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mousedown", onMouseDown);
-    window.addEventListener("mouseup", onMouseUp);
-
-    // Add hover listeners to interactive elements
+  // Attach listeners to new interactive elements only
+  const attachListenersToNewElements = useCallback(() => {
     const interactiveElements = document.querySelectorAll(
       'a, button, [role="button"], input, textarea, [data-cursor-hover]'
     );
 
     interactiveElements.forEach((el) => {
-      el.addEventListener("mouseenter", handleMouseEnter);
-      el.addEventListener("mouseleave", handleMouseLeave);
+      if (!attachedElementsRef.current.has(el)) {
+        el.addEventListener("mouseenter", handleMouseEnter);
+        el.addEventListener("mouseleave", handleMouseLeave);
+        attachedElementsRef.current.add(el);
+      }
     });
+  }, [handleMouseEnter, handleMouseLeave]);
 
-    // Hide cursor when leaving window
-    const onMouseLeave = () => {
+  useEffect(() => {
+    const cursor = cursorRef.current;
+    const follower = followerRef.current;
+    if (!cursor || !follower) return;
+
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    // Hide default cursor
+    document.body.style.cursor = "none";
+
+    const onMouseMove = (e: MouseEvent) => {
+      // Main cursor follows immediately
+      gsap.set(cursor, { x: e.clientX, y: e.clientY });
+
+      // Follower with smooth delay (skip if reduced motion)
+      if (!prefersReducedMotion) {
+        gsap.to(follower, {
+          x: e.clientX,
+          y: e.clientY,
+          duration: 0.15,
+          ease: "power2.out",
+        });
+      } else {
+        gsap.set(follower, { x: e.clientX, y: e.clientY });
+      }
+    };
+
+    const onMouseDown = () => setIsClicking(true);
+    const onMouseUp = () => setIsClicking(false);
+
+    const onDocumentMouseLeave = () => {
       gsap.to([cursor, follower], { opacity: 0, duration: 0.2 });
     };
-    const onMouseEnter = () => {
+    const onDocumentMouseEnter = () => {
       gsap.to([cursor, follower], { opacity: 1, duration: 0.2 });
     };
 
-    document.addEventListener("mouseleave", onMouseLeave);
-    document.addEventListener("mouseenter", onMouseEnter);
+    // Add global event listeners
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
+    window.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("mouseleave", onDocumentMouseLeave);
+    document.addEventListener("mouseenter", onDocumentMouseEnter);
+
+    // Initial attachment
+    attachListenersToNewElements();
 
     return () => {
       document.body.style.cursor = "auto";
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mousedown", onMouseDown);
       window.removeEventListener("mouseup", onMouseUp);
-      document.removeEventListener("mouseleave", onMouseLeave);
-      document.removeEventListener("mouseenter", onMouseEnter);
-
-      interactiveElements.forEach((el) => {
-        el.removeEventListener("mouseenter", handleMouseEnter);
-        el.removeEventListener("mouseleave", handleMouseLeave);
-      });
+      document.removeEventListener("mouseleave", onDocumentMouseLeave);
+      document.removeEventListener("mouseenter", onDocumentMouseEnter);
     };
-  }, []);
+  }, [attachListenersToNewElements]);
 
-  // Re-attach listeners when DOM changes
+  // Debounced MutationObserver to handle DOM changes
   useEffect(() => {
-    const observer = new MutationObserver(() => {
-      const interactiveElements = document.querySelectorAll(
-        'a, button, [role="button"], input, textarea, [data-cursor-hover]'
-      );
+    let debounceTimer: ReturnType<typeof setTimeout>;
 
-      interactiveElements.forEach((el) => {
-        el.addEventListener("mouseenter", () => setIsHovering(true));
-        el.addEventListener("mouseleave", () => {
-          setIsHovering(false);
-          setCursorText("");
-        });
-      });
+    const observer = new MutationObserver(() => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(attachListenersToNewElements, 100);
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, []);
+
+    return () => {
+      clearTimeout(debounceTimer);
+      observer.disconnect();
+    };
+  }, [attachListenersToNewElements]);
 
   return (
     <>
@@ -125,6 +130,7 @@ export default function CustomCursor() {
           ${isClicking ? "scale-75" : "scale-100"}
         `}
         style={{ mixBlendMode: "difference" }}
+        aria-hidden="true"
       >
         <span
           className={`
@@ -148,6 +154,7 @@ export default function CustomCursor() {
           ${isHovering ? "w-16 h-16 bg-gold/10" : "w-8 h-8 bg-transparent"}
           ${isClicking ? "scale-90" : "scale-100"}
         `}
+        aria-hidden="true"
       >
         {cursorText && (
           <span className="absolute inset-0 flex items-center justify-center text-xs text-gold font-body">

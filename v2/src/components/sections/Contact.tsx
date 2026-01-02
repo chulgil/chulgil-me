@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import Toast, { useToast } from "@/components/ui/Toast";
 
 const EMAIL = "contact@chulgil.me";
@@ -14,8 +13,11 @@ const socialLinks = [
 ];
 
 export default function Contact() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const contentRef = useScrollAnimation<HTMLDivElement>({
+    start: "top 70%",
+    yOffset: 50,
+    stagger: 0.15,
+  });
   const { toast, showToast, hideToast } = useToast();
 
   const copyEmail = async () => {
@@ -34,30 +36,8 @@ export default function Contact() {
     }
   };
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from(contentRef.current?.children || [], {
-        y: 50,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.15,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 70%",
-          toggleActions: "play none none reverse",
-        },
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
-
   return (
-    <section
-      ref={sectionRef}
-      className="relative min-h-screen flex items-center bg-ebony py-24"
-    >
+    <section className="relative min-h-screen flex items-center bg-ebony py-24">
       <div className="section-container">
         <div ref={contentRef} className="text-center">
           {/* Section Title */}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { gsap } from "@/lib/gsap";
 
 interface ToastProps {
   message: string;
@@ -27,15 +26,17 @@ export default function Toast({
 
   return (
     <div
+      role="alert"
+      aria-live="polite"
       className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50
         bg-ebony text-ivory px-6 py-3 rounded-full
         shadow-xl border border-gold/30
         animate-slide-up"
     >
       <div className="flex items-center gap-3">
-        <span className="text-gold">♪</span>
+        <span className="text-gold" aria-hidden="true">♪</span>
         <span className="font-body text-sm">{message}</span>
-        <span className="text-gold">♪</span>
+        <span className="text-gold" aria-hidden="true">♪</span>
       </div>
     </div>
   );

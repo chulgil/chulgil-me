@@ -1,47 +1,18 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import Image from "next/image";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import SectionHeader from "@/components/ui/SectionHeader";
 
 export default function About() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Scroll-triggered animation
-      gsap.from(contentRef.current?.children || [], {
-        y: 60,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.2,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 70%",
-          end: "bottom 30%",
-          toggleActions: "play none none reverse",
-        },
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  const contentRef = useScrollAnimation<HTMLDivElement>({
+    start: "top 70%",
+  });
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative min-h-screen flex items-center bg-cream py-24"
-    >
+    <section className="relative min-h-screen flex items-center bg-cream py-24">
       <div className="section-container">
-        {/* Section Title */}
-        <div className="flex items-center gap-4 mb-16">
-          <span className="text-2xl text-gold">&#9833;</span>
-          <h2 className="font-heading text-4xl text-ebony">소개</h2>
-          <div className="flex-1 h-px bg-charcoal/20" />
-          <span className="text-2xl text-gold">&#9834;</span>
-        </div>
+        <SectionHeader title="소개" />
 
         {/* Content */}
         <div ref={contentRef} className="grid md:grid-cols-2 gap-16 items-center">
