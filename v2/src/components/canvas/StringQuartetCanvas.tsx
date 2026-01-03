@@ -279,27 +279,27 @@ export default function StringQuartetCanvas({
       drawCelloDetails(ctx, state, time);
       drawCelloStrings(ctx, state, time);
 
-      // === ENDPIN (starts at body bottom y=128) ===
+      // === ENDPIN (starts at body bottom y=145) ===
       // Endpin collar
       ctx.fillStyle = "#404040";
       ctx.beginPath();
-      ctx.ellipse(0, 132, 7, 4, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 148, 7, 4, 0, 0, Math.PI * 2);
       ctx.fill();
 
       // Endpin rod
       ctx.strokeStyle = "#A0A0A0";
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(0, 132);
-      ctx.lineTo(0, 185);
+      ctx.moveTo(0, 148);
+      ctx.lineTo(0, 205);
       ctx.stroke();
 
       // Endpin tip
       ctx.fillStyle = "#505050";
       ctx.beginPath();
-      ctx.moveTo(-4, 185);
-      ctx.lineTo(4, 185);
-      ctx.lineTo(0, 195);
+      ctx.moveTo(-4, 205);
+      ctx.lineTo(4, 205);
+      ctx.lineTo(0, 215);
       ctx.closePath();
       ctx.fill();
 
@@ -478,42 +478,64 @@ export default function StringQuartetCanvas({
 // Helper functions for drawing instrument parts
 
 function drawViolinBody(ctx: CanvasRenderingContext2D, color: string) {
-  // Real violin proportions (4/4): body 356mm, upper 168mm, middle 112mm, lower 206mm
-  // Scaled to canvas: body height 180, upper half-width 42, middle 28, lower 52
+  // Four Circles Method - violin hourglass shape
+  // Upper bout: 80% of lower bout width
+  // C-bout (waist): 55% of lower bout width
+  // Lower bout: largest, with rounded bottom
+  // Body height: ~180px, lower bout half-width: 52, upper: 42, waist: 28
   ctx.fillStyle = color;
   ctx.beginPath();
 
-  ctx.moveTo(0, -90); // Top center
+  // Start from top center
+  ctx.moveTo(0, -85);
 
-  // Upper bout - right (width 42)
-  ctx.bezierCurveTo(22, -90, 38, -80, 42, -65);
-  ctx.bezierCurveTo(44, -52, 42, -38, 36, -25);
+  // === RIGHT SIDE ===
+  // Upper bout - rounded arc (center around y=-55, radius ~35)
+  ctx.bezierCurveTo(25, -85, 40, -75, 44, -58);
+  ctx.bezierCurveTo(46, -45, 44, -32, 38, -22);
 
-  // C-bout right (narrow waist, width 28)
-  ctx.bezierCurveTo(30, -12, 28, 0, 28, 10);
-  ctx.bezierCurveTo(28, 20, 32, 35, 42, 50);
+  // Upper corner - transition to C-bout
+  ctx.bezierCurveTo(34, -15, 30, -8, 28, 0);
 
-  // Lower bout right (width 52)
-  ctx.bezierCurveTo(50, 62, 52, 75, 48, 85);
-  ctx.bezierCurveTo(42, 92, 24, 95, 0, 95);
+  // C-bout (waist) - inward curve
+  ctx.bezierCurveTo(26, 8, 26, 16, 28, 24);
 
-  // Lower bout left
-  ctx.bezierCurveTo(-24, 95, -42, 92, -48, 85);
-  ctx.bezierCurveTo(-52, 75, -50, 62, -42, 50);
+  // Lower corner - transition to lower bout
+  ctx.bezierCurveTo(32, 35, 40, 48, 50, 58);
 
-  // C-bout left
-  ctx.bezierCurveTo(-32, 35, -28, 20, -28, 10);
-  ctx.bezierCurveTo(-28, 0, -30, -12, -36, -25);
+  // Lower bout - rounded arc (center around y=75, radius ~45)
+  ctx.bezierCurveTo(54, 65, 56, 75, 54, 85);
+  ctx.bezierCurveTo(52, 92, 45, 98, 35, 102);
 
-  // Upper bout left
-  ctx.bezierCurveTo(-42, -38, -44, -52, -42, -65);
-  ctx.bezierCurveTo(-38, -80, -22, -90, 0, -90);
+  // Bottom curve - rounded, not flat
+  ctx.bezierCurveTo(22, 106, 10, 108, 0, 108);
+
+  // === LEFT SIDE (mirror) ===
+  // Bottom curve
+  ctx.bezierCurveTo(-10, 108, -22, 106, -35, 102);
+  ctx.bezierCurveTo(-45, 98, -52, 92, -54, 85);
+
+  // Lower bout
+  ctx.bezierCurveTo(-56, 75, -54, 65, -50, 58);
+
+  // Lower corner
+  ctx.bezierCurveTo(-40, 48, -32, 35, -28, 24);
+
+  // C-bout (waist)
+  ctx.bezierCurveTo(-26, 16, -26, 8, -28, 0);
+
+  // Upper corner
+  ctx.bezierCurveTo(-30, -8, -34, -15, -38, -22);
+
+  // Upper bout
+  ctx.bezierCurveTo(-44, -32, -46, -45, -44, -58);
+  ctx.bezierCurveTo(-40, -75, -25, -85, 0, -85);
 
   ctx.closePath();
   ctx.fill();
 
   // Wood grain effect
-  const grainGrad = ctx.createLinearGradient(-45, -85, 45, 90);
+  const grainGrad = ctx.createLinearGradient(-50, -80, 50, 105);
   grainGrad.addColorStop(0, "rgba(180, 120, 60, 0.2)");
   grainGrad.addColorStop(0.5, "rgba(140, 90, 45, 0.15)");
   grainGrad.addColorStop(1, "rgba(100, 60, 30, 0.2)");
@@ -521,14 +543,14 @@ function drawViolinBody(ctx: CanvasRenderingContext2D, color: string) {
   ctx.fill();
 
   // Varnish shine
-  const shine = ctx.createRadialGradient(-15, -50, 0, -10, -30, 60);
+  const shine = ctx.createRadialGradient(-15, -45, 0, -10, -25, 60);
   shine.addColorStop(0, "rgba(255, 240, 200, 0.35)");
   shine.addColorStop(0.4, "rgba(255, 220, 180, 0.12)");
   shine.addColorStop(1, "transparent");
   ctx.fillStyle = shine;
   ctx.fill();
 
-  // Purfling
+  // Purfling (outline)
   ctx.strokeStyle = "#1a0800";
   ctx.lineWidth = 1.8;
   ctx.stroke();
@@ -542,48 +564,47 @@ function drawViolinDetails(
 ) {
   const glow = state.hover ? 0.3 : 0;
 
-  // === F-HOLES - Real proportions: ~40px long (22% of 180px body) ===
-  // f-holes are positioned around the bridge, in the waist area
+  // === F-HOLES - positioned in C-bout area (y=10 to y=50) ===
   ctx.fillStyle = "#0a0400";
   ctx.strokeStyle = "#0a0400";
   ctx.lineWidth = 2;
   ctx.lineCap = "round";
 
   [-1, 1].forEach((side) => {
-    // Upper nock (small circle) - at y=5
+    // Upper nock (small circle)
     ctx.beginPath();
-    ctx.arc(side * 12, 5, 2, 0, Math.PI * 2);
+    ctx.arc(side * 12, 12, 2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Main f-curve (short S-shape, ~35px) - from y=8 to y=42
+    // Main f-curve (S-shape, ~35px)
     ctx.beginPath();
-    ctx.moveTo(side * 12, 8);
-    ctx.bezierCurveTo(side * 15, 18, side * 16, 28, side * 14, 38);
+    ctx.moveTo(side * 12, 15);
+    ctx.bezierCurveTo(side * 15, 25, side * 16, 35, side * 14, 45);
     ctx.stroke();
 
-    // Lower nock (small circle) - at y=42
+    // Lower nock (small circle)
     ctx.beginPath();
-    ctx.arc(side * 14, 42, 2, 0, Math.PI * 2);
+    ctx.arc(side * 14, 48, 2, 0, Math.PI * 2);
     ctx.fill();
 
     // Center notch (horizontal line at bridge level)
     ctx.beginPath();
-    ctx.moveTo(side * 13, 23);
-    ctx.lineTo(side * 16, 24);
+    ctx.moveTo(side * 13, 30);
+    ctx.lineTo(side * 16, 31);
     ctx.stroke();
   });
 
-  // === BRIDGE - at y=50 (between f-holes) ===
+  // === BRIDGE - at y=55 (below f-holes) ===
   ctx.fillStyle = "#D4C4A8";
   ctx.strokeStyle = "#5D4E37";
   ctx.lineWidth = 1;
 
   ctx.beginPath();
-  ctx.moveTo(-16, 55);
-  ctx.lineTo(-14, 47);
-  ctx.bezierCurveTo(-10, 44, -5, 43, 0, 43);
-  ctx.bezierCurveTo(5, 43, 10, 44, 14, 47);
-  ctx.lineTo(16, 55);
+  ctx.moveTo(-16, 62);
+  ctx.lineTo(-14, 54);
+  ctx.bezierCurveTo(-10, 51, -5, 50, 0, 50);
+  ctx.bezierCurveTo(5, 50, 10, 51, 14, 54);
+  ctx.lineTo(16, 62);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
@@ -591,10 +612,10 @@ function drawViolinDetails(
   // === TAILPIECE ===
   ctx.fillStyle = COLORS.accent.ebony;
   ctx.beginPath();
-  ctx.moveTo(-8, 62);
-  ctx.lineTo(8, 62);
-  ctx.lineTo(6, 88);
-  ctx.lineTo(-6, 88);
+  ctx.moveTo(-8, 68);
+  ctx.lineTo(8, 68);
+  ctx.lineTo(6, 98);
+  ctx.lineTo(-6, 98);
   ctx.closePath();
   ctx.fill();
 
@@ -602,15 +623,15 @@ function drawViolinDetails(
   ctx.fillStyle = "#A0A0A0";
   [-5, -1.5, 1.5, 5].forEach((x) => {
     ctx.beginPath();
-    ctx.arc(x, 70, 1.5, 0, Math.PI * 2);
+    ctx.arc(x, 78, 1.5, 0, Math.PI * 2);
     ctx.fill();
   });
 
   // === NECK ===
   ctx.fillStyle = isViola ? "#7A5C3A" : "#8B6914";
   ctx.beginPath();
-  ctx.moveTo(-6, -90);
-  ctx.lineTo(6, -90);
+  ctx.moveTo(-6, -85);
+  ctx.lineTo(6, -85);
   ctx.lineTo(5, -155);
   ctx.lineTo(-5, -155);
   ctx.closePath();
@@ -619,8 +640,8 @@ function drawViolinDetails(
   // === FINGERBOARD (ebony) ===
   ctx.fillStyle = COLORS.accent.ebony;
   ctx.beginPath();
-  ctx.moveTo(-7, -90);
-  ctx.lineTo(7, -90);
+  ctx.moveTo(-7, -85);
+  ctx.lineTo(7, -85);
   ctx.lineTo(5, -150);
   ctx.lineTo(-5, -150);
   ctx.closePath();
@@ -698,9 +719,10 @@ function drawViolinStrings(
     ctx.beginPath();
 
     const startX = x * 0.5;
+    // From nut (-148) to bridge (68)
     ctx.moveTo(startX, -148);
-    for (let y = -148; y <= 60; y += 4) {
-      const progress = (y + 148) / 208;
+    for (let y = -148; y <= 68; y += 4) {
+      const progress = (y + 148) / 216;
       const currentX = startX + (x - startX) * progress;
       const wave = Math.sin((y + time * 30) * 0.15) * vibration * 0.25;
       ctx.lineTo(currentX + wave, y);
@@ -710,42 +732,64 @@ function drawViolinStrings(
 }
 
 function drawCelloBody(ctx: CanvasRenderingContext2D, color: string) {
-  // Real cello proportions (4/4): body 750mm, upper 342mm, middle 238mm, lower 432mm
-  // Scaled to canvas: body height 220, upper half-width 50, middle 35, lower 63
+  // Four Circles Method - cello hourglass shape
+  // Upper bout: 80% of lower bout width
+  // C-bout (waist): 55% of lower bout width
+  // Lower bout: largest, with rounded bottom
+  // Body height: ~230px, lower bout half-width: 65, upper: 52, waist: 36
   ctx.fillStyle = color;
   ctx.beginPath();
 
-  ctx.moveTo(0, -110); // Top center
+  // Start from top center
+  ctx.moveTo(0, -105);
 
-  // Upper bout - right (width 50)
-  ctx.bezierCurveTo(28, -110, 45, -100, 50, -82);
-  ctx.bezierCurveTo(52, -68, 50, -50, 42, -35);
+  // === RIGHT SIDE ===
+  // Upper bout - rounded arc
+  ctx.bezierCurveTo(30, -105, 48, -95, 54, -75);
+  ctx.bezierCurveTo(56, -60, 54, -42, 46, -28);
 
-  // C-bout right (narrow waist, width 35)
-  ctx.bezierCurveTo(36, -18, 35, 0, 35, 15);
-  ctx.bezierCurveTo(35, 30, 40, 50, 52, 70);
+  // Upper corner - transition to C-bout
+  ctx.bezierCurveTo(42, -18, 38, -8, 36, 0);
 
-  // Lower bout right (width 63)
-  ctx.bezierCurveTo(60, 85, 63, 100, 58, 112);
-  ctx.bezierCurveTo(50, 122, 30, 128, 0, 128);
+  // C-bout (waist) - inward curve
+  ctx.bezierCurveTo(34, 10, 34, 22, 36, 32);
 
-  // Lower bout left
-  ctx.bezierCurveTo(-30, 128, -50, 122, -58, 112);
-  ctx.bezierCurveTo(-63, 100, -60, 85, -52, 70);
+  // Lower corner - transition to lower bout
+  ctx.bezierCurveTo(42, 48, 52, 65, 62, 78);
 
-  // C-bout left
-  ctx.bezierCurveTo(-40, 50, -35, 30, -35, 15);
-  ctx.bezierCurveTo(-35, 0, -36, -18, -42, -35);
+  // Lower bout - rounded arc
+  ctx.bezierCurveTo(66, 88, 68, 100, 66, 112);
+  ctx.bezierCurveTo(62, 122, 52, 130, 40, 136);
 
-  // Upper bout left
-  ctx.bezierCurveTo(-50, -50, -52, -68, -50, -82);
-  ctx.bezierCurveTo(-45, -100, -28, -110, 0, -110);
+  // Bottom curve - rounded, not flat
+  ctx.bezierCurveTo(25, 142, 12, 145, 0, 145);
+
+  // === LEFT SIDE (mirror) ===
+  // Bottom curve
+  ctx.bezierCurveTo(-12, 145, -25, 142, -40, 136);
+  ctx.bezierCurveTo(-52, 130, -62, 122, -66, 112);
+
+  // Lower bout
+  ctx.bezierCurveTo(-68, 100, -66, 88, -62, 78);
+
+  // Lower corner
+  ctx.bezierCurveTo(-52, 65, -42, 48, -36, 32);
+
+  // C-bout (waist)
+  ctx.bezierCurveTo(-34, 22, -34, 10, -36, 0);
+
+  // Upper corner
+  ctx.bezierCurveTo(-38, -8, -42, -18, -46, -28);
+
+  // Upper bout
+  ctx.bezierCurveTo(-54, -42, -56, -60, -54, -75);
+  ctx.bezierCurveTo(-48, -95, -30, -105, 0, -105);
 
   ctx.closePath();
   ctx.fill();
 
   // Wood grain effect
-  const grainGrad = ctx.createLinearGradient(-55, -105, 55, 125);
+  const grainGrad = ctx.createLinearGradient(-60, -100, 60, 140);
   grainGrad.addColorStop(0, "rgba(180, 120, 60, 0.2)");
   grainGrad.addColorStop(0.5, "rgba(140, 90, 45, 0.15)");
   grainGrad.addColorStop(1, "rgba(100, 60, 30, 0.2)");
@@ -753,14 +797,14 @@ function drawCelloBody(ctx: CanvasRenderingContext2D, color: string) {
   ctx.fill();
 
   // Varnish shine
-  const shine = ctx.createRadialGradient(-18, -70, 0, -12, -45, 80);
+  const shine = ctx.createRadialGradient(-18, -60, 0, -12, -35, 80);
   shine.addColorStop(0, "rgba(255, 240, 200, 0.35)");
   shine.addColorStop(0.4, "rgba(255, 220, 180, 0.12)");
   shine.addColorStop(1, "transparent");
   ctx.fillStyle = shine;
   ctx.fill();
 
-  // Purfling
+  // Purfling (outline)
   ctx.strokeStyle = "#1a0800";
   ctx.lineWidth = 2;
   ctx.stroke();
@@ -773,47 +817,47 @@ function drawCelloDetails(
 ) {
   const glow = state.hover ? 0.3 : 0;
 
-  // === F-HOLES - Real proportions: ~45px long (20% of 220px body) ===
+  // === F-HOLES - positioned in C-bout area (y=15 to y=60) ===
   ctx.fillStyle = "#0a0400";
   ctx.strokeStyle = "#0a0400";
   ctx.lineWidth = 2.5;
   ctx.lineCap = "round";
 
   [-1, 1].forEach((side) => {
-    // Upper nock - at y=10
+    // Upper nock
     ctx.beginPath();
-    ctx.arc(side * 16, 10, 2.5, 0, Math.PI * 2);
+    ctx.arc(side * 16, 18, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Main f-curve (~45px) - from y=14 to y=55
+    // Main f-curve (~45px)
     ctx.beginPath();
-    ctx.moveTo(side * 16, 14);
-    ctx.bezierCurveTo(side * 20, 28, side * 21, 40, side * 18, 52);
+    ctx.moveTo(side * 16, 22);
+    ctx.bezierCurveTo(side * 20, 35, side * 21, 50, side * 18, 62);
     ctx.stroke();
 
-    // Lower nock - at y=55
+    // Lower nock
     ctx.beginPath();
-    ctx.arc(side * 18, 55, 2.5, 0, Math.PI * 2);
+    ctx.arc(side * 18, 65, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
     // Center notch
     ctx.beginPath();
-    ctx.moveTo(side * 17, 32);
-    ctx.lineTo(side * 21, 33);
+    ctx.moveTo(side * 17, 42);
+    ctx.lineTo(side * 21, 43);
     ctx.stroke();
   });
 
-  // === BRIDGE - at y=65 ===
+  // === BRIDGE - at y=72 ===
   ctx.fillStyle = "#D4C4A8";
   ctx.strokeStyle = "#5D4E37";
   ctx.lineWidth = 1;
 
   ctx.beginPath();
-  ctx.moveTo(-22, 72);
-  ctx.lineTo(-20, 62);
-  ctx.bezierCurveTo(-14, 58, -6, 56, 0, 56);
-  ctx.bezierCurveTo(6, 56, 14, 58, 20, 62);
-  ctx.lineTo(22, 72);
+  ctx.moveTo(-22, 82);
+  ctx.lineTo(-20, 72);
+  ctx.bezierCurveTo(-14, 68, -6, 66, 0, 66);
+  ctx.bezierCurveTo(6, 66, 14, 68, 20, 72);
+  ctx.lineTo(22, 82);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
@@ -821,10 +865,10 @@ function drawCelloDetails(
   // === TAILPIECE ===
   ctx.fillStyle = COLORS.accent.ebony;
   ctx.beginPath();
-  ctx.moveTo(-10, 80);
-  ctx.lineTo(10, 80);
-  ctx.lineTo(8, 115);
-  ctx.lineTo(-8, 115);
+  ctx.moveTo(-10, 90);
+  ctx.lineTo(10, 90);
+  ctx.lineTo(8, 130);
+  ctx.lineTo(-8, 130);
   ctx.closePath();
   ctx.fill();
 
@@ -832,15 +876,15 @@ function drawCelloDetails(
   ctx.fillStyle = "#A0A0A0";
   [-6, -2, 2, 6].forEach((x) => {
     ctx.beginPath();
-    ctx.arc(x, 90, 2, 0, Math.PI * 2);
+    ctx.arc(x, 102, 2, 0, Math.PI * 2);
     ctx.fill();
   });
 
   // === NECK ===
   ctx.fillStyle = "#9A6B3A";
   ctx.beginPath();
-  ctx.moveTo(-8, -110);
-  ctx.lineTo(8, -110);
+  ctx.moveTo(-8, -105);
+  ctx.lineTo(8, -105);
   ctx.lineTo(7, -195);
   ctx.lineTo(-7, -195);
   ctx.closePath();
@@ -849,8 +893,8 @@ function drawCelloDetails(
   // === FINGERBOARD ===
   ctx.fillStyle = COLORS.accent.ebony;
   ctx.beginPath();
-  ctx.moveTo(-9, -110);
-  ctx.lineTo(9, -110);
+  ctx.moveTo(-9, -105);
+  ctx.lineTo(9, -105);
   ctx.lineTo(7, -188);
   ctx.lineTo(-7, -188);
   ctx.closePath();
@@ -924,9 +968,10 @@ function drawCelloStrings(
     const startX = x * 0.4;
     const endX = x;
 
-    ctx.moveTo(startX, -215);
-    for (let y = -215; y <= 115; y += 5) {
-      const progress = (y + 215) / 330;
+    // From nut (-186) to tailpiece (90)
+    ctx.moveTo(startX, -186);
+    for (let y = -186; y <= 90; y += 5) {
+      const progress = (y + 186) / 276;
       const currentX = startX + (endX - startX) * progress;
       const wave = Math.sin((y + time * 25) * 0.1) * vibration * 0.5;
       ctx.lineTo(currentX + wave, y);
