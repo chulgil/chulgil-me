@@ -280,30 +280,6 @@ export default function StringQuartetCanvas({
       drawCelloDetails(ctx, state, time);
       drawCelloStrings(ctx, state, time);
 
-      // === ENDPIN (starts at body bottom y=145) ===
-      // Endpin collar
-      ctx.fillStyle = "#404040";
-      ctx.beginPath();
-      ctx.ellipse(0, 148, 7, 4, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Endpin rod
-      ctx.strokeStyle = "#A0A0A0";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(0, 148);
-      ctx.lineTo(0, 205);
-      ctx.stroke();
-
-      // Endpin tip
-      ctx.fillStyle = "#505050";
-      ctx.beginPath();
-      ctx.moveTo(-4, 205);
-      ctx.lineTo(4, 205);
-      ctx.lineTo(0, 215);
-      ctx.closePath();
-      ctx.fill();
-
       ctx.restore();
     },
     []
@@ -1178,6 +1154,30 @@ function drawCelloDetails(
     ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
     ctx.fill();
   });
+
+  // === ENDPIN (starts at body bottom y=145) ===
+  // Endpin collar
+  ctx.fillStyle = "#404040";
+  ctx.beginPath();
+  ctx.ellipse(0, 148, 7, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Endpin rod
+  ctx.strokeStyle = "#A0A0A0";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(0, 148);
+  ctx.lineTo(0, 205);
+  ctx.stroke();
+
+  // Endpin tip
+  ctx.fillStyle = "#505050";
+  ctx.beginPath();
+  ctx.moveTo(-4, 205);
+  ctx.lineTo(4, 205);
+  ctx.lineTo(0, 215);
+  ctx.closePath();
+  ctx.fill();
 
   // Glow on hover
   if (glow > 0) {
