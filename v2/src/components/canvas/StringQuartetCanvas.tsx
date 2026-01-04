@@ -539,11 +539,11 @@ function drawViolinBody(ctx: CanvasRenderingContext2D, color: string) {
   // Lower bout - maintain width then curve to bottom (like upper bout)
   ctx.bezierCurveTo(lowerW, H * 0.72, lowerW, H * 0.88, lowerW * 0.7, H * 0.95);
 
-  // Bottom curve - rounded arch (symmetric like upper bout)
-  ctx.bezierCurveTo(lowerW * 0.5, H, lowerW * 0.25, H, 0, H);
+  // Bottom curve - more rounded arch (control points beyond H for bulge)
+  ctx.bezierCurveTo(lowerW * 0.55, H * 1.08, lowerW * 0.25, H * 1.08, 0, H);
 
   // === LEFT SIDE (mirror) ===
-  ctx.bezierCurveTo(-lowerW * 0.25, H, -lowerW * 0.5, H, -lowerW * 0.7, H * 0.95);
+  ctx.bezierCurveTo(-lowerW * 0.25, H * 1.08, -lowerW * 0.55, H * 1.08, -lowerW * 0.7, H * 0.95);
   ctx.bezierCurveTo(-lowerW, H * 0.88, -lowerW, H * 0.72, -lowerW, maxLowerY);
   ctx.bezierCurveTo(-lowerW, H * 0.35, -lowerW * 0.75, lowerCornerY, -cBoutW - 8, lowerCornerY);
   ctx.bezierCurveTo(-cBoutW, lowerCornerY, -cBoutW, H * 0.08, -cBoutW, 0);
@@ -613,11 +613,11 @@ function drawViolaBody(ctx: CanvasRenderingContext2D, color: string) {
   // Lower bout - maintain width then curve to bottom (like upper bout)
   ctx.bezierCurveTo(lowerW, H * 0.72, lowerW, H * 0.88, lowerW * 0.7, H * 0.95);
 
-  // Bottom curve - rounded arch (symmetric like upper bout)
-  ctx.bezierCurveTo(lowerW * 0.5, H, lowerW * 0.25, H, 0, H);
+  // Bottom curve - more rounded arch (control points beyond H for bulge)
+  ctx.bezierCurveTo(lowerW * 0.55, H * 1.08, lowerW * 0.25, H * 1.08, 0, H);
 
   // === LEFT SIDE (mirror) ===
-  ctx.bezierCurveTo(-lowerW * 0.25, H, -lowerW * 0.5, H, -lowerW * 0.7, H * 0.95);
+  ctx.bezierCurveTo(-lowerW * 0.25, H * 1.08, -lowerW * 0.55, H * 1.08, -lowerW * 0.7, H * 0.95);
   ctx.bezierCurveTo(-lowerW, H * 0.88, -lowerW, H * 0.72, -lowerW, maxLowerY);
   ctx.bezierCurveTo(-lowerW, H * 0.35, -lowerW * 0.75, lowerCornerY, -cBoutW - 10, lowerCornerY);
   ctx.bezierCurveTo(-cBoutW, lowerCornerY, -cBoutW, H * 0.08, -cBoutW, 0);
@@ -1060,11 +1060,11 @@ function drawCelloBody(ctx: CanvasRenderingContext2D, color: string) {
   // Lower bout - maintain width then curve to bottom (like upper bout)
   ctx.bezierCurveTo(lowerW, H * 0.72, lowerW, H * 0.88, lowerW * 0.7, H * 0.95);
 
-  // Bottom curve - rounded arch (symmetric like upper bout)
-  ctx.bezierCurveTo(lowerW * 0.5, H, lowerW * 0.25, H, 0, H);
+  // Bottom curve - more rounded arch (control points beyond H for bulge)
+  ctx.bezierCurveTo(lowerW * 0.55, H * 1.08, lowerW * 0.25, H * 1.08, 0, H);
 
   // === LEFT SIDE (mirror) ===
-  ctx.bezierCurveTo(-lowerW * 0.25, H, -lowerW * 0.5, H, -lowerW * 0.7, H * 0.95);
+  ctx.bezierCurveTo(-lowerW * 0.25, H * 1.08, -lowerW * 0.55, H * 1.08, -lowerW * 0.7, H * 0.95);
   ctx.bezierCurveTo(-lowerW, H * 0.88, -lowerW, H * 0.72, -lowerW, maxLowerY);
   ctx.bezierCurveTo(-lowerW, H * 0.35, -lowerW * 0.75, lowerCornerY, -cBoutW - 18, lowerCornerY);
   ctx.bezierCurveTo(-cBoutW, lowerCornerY, -cBoutW, H * 0.08, -cBoutW, 0);
