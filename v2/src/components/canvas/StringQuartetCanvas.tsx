@@ -536,15 +536,15 @@ function drawViolinBody(ctx: CanvasRenderingContext2D, color: string) {
   // Lower corner to lower bout (symmetric with upper)
   ctx.bezierCurveTo(lowerW * 0.75, lowerCornerY, lowerW, H * 0.35, lowerW, maxLowerY);
 
-  // Lower bout - curves inward toward bottom
-  ctx.bezierCurveTo(lowerW, H * 0.68, lowerW * 0.75, H * 0.82, lowerW * 0.45, H * 0.92);
+  // Lower bout - maintain width then curve to bottom (like upper bout)
+  ctx.bezierCurveTo(lowerW, H * 0.72, lowerW, H * 0.88, lowerW * 0.7, H * 0.95);
 
-  // Bottom curve - rounded arc (not flat)
-  ctx.quadraticCurveTo(lowerW * 0.2, H * 0.98, 0, H * 0.98);
+  // Bottom curve - rounded arch (symmetric like upper bout)
+  ctx.bezierCurveTo(lowerW * 0.5, H, lowerW * 0.25, H, 0, H);
 
   // === LEFT SIDE (mirror) ===
-  ctx.quadraticCurveTo(-lowerW * 0.2, H * 0.98, -lowerW * 0.45, H * 0.92);
-  ctx.bezierCurveTo(-lowerW * 0.75, H * 0.82, -lowerW, H * 0.68, -lowerW, maxLowerY);
+  ctx.bezierCurveTo(-lowerW * 0.25, H, -lowerW * 0.5, H, -lowerW * 0.7, H * 0.95);
+  ctx.bezierCurveTo(-lowerW, H * 0.88, -lowerW, H * 0.72, -lowerW, maxLowerY);
   ctx.bezierCurveTo(-lowerW, H * 0.35, -lowerW * 0.75, lowerCornerY, -cBoutW - 8, lowerCornerY);
   ctx.bezierCurveTo(-cBoutW, lowerCornerY, -cBoutW, H * 0.08, -cBoutW, 0);
   ctx.bezierCurveTo(-cBoutW, -H * 0.08, -cBoutW, upperCornerY, -cBoutW - 8, upperCornerY);
@@ -610,15 +610,15 @@ function drawViolaBody(ctx: CanvasRenderingContext2D, color: string) {
   // Lower corner to lower bout (symmetric)
   ctx.bezierCurveTo(lowerW * 0.75, lowerCornerY, lowerW, H * 0.35, lowerW, maxLowerY);
 
-  // Lower bout - curves inward toward bottom
-  ctx.bezierCurveTo(lowerW, H * 0.68, lowerW * 0.75, H * 0.82, lowerW * 0.45, H * 0.92);
+  // Lower bout - maintain width then curve to bottom (like upper bout)
+  ctx.bezierCurveTo(lowerW, H * 0.72, lowerW, H * 0.88, lowerW * 0.7, H * 0.95);
 
-  // Bottom curve - rounded arc
-  ctx.quadraticCurveTo(lowerW * 0.2, H * 0.98, 0, H * 0.98);
+  // Bottom curve - rounded arch (symmetric like upper bout)
+  ctx.bezierCurveTo(lowerW * 0.5, H, lowerW * 0.25, H, 0, H);
 
   // === LEFT SIDE (mirror) ===
-  ctx.quadraticCurveTo(-lowerW * 0.2, H * 0.98, -lowerW * 0.45, H * 0.92);
-  ctx.bezierCurveTo(-lowerW * 0.75, H * 0.82, -lowerW, H * 0.68, -lowerW, maxLowerY);
+  ctx.bezierCurveTo(-lowerW * 0.25, H, -lowerW * 0.5, H, -lowerW * 0.7, H * 0.95);
+  ctx.bezierCurveTo(-lowerW, H * 0.88, -lowerW, H * 0.72, -lowerW, maxLowerY);
   ctx.bezierCurveTo(-lowerW, H * 0.35, -lowerW * 0.75, lowerCornerY, -cBoutW - 10, lowerCornerY);
   ctx.bezierCurveTo(-cBoutW, lowerCornerY, -cBoutW, H * 0.08, -cBoutW, 0);
   ctx.bezierCurveTo(-cBoutW, -H * 0.08, -cBoutW, upperCornerY, -cBoutW - 10, upperCornerY);
@@ -1057,15 +1057,15 @@ function drawCelloBody(ctx: CanvasRenderingContext2D, color: string) {
   // Lower corner to lower bout (symmetric)
   ctx.bezierCurveTo(lowerW * 0.75, lowerCornerY, lowerW, H * 0.35, lowerW, maxLowerY);
 
-  // Lower bout - curves inward toward bottom
-  ctx.bezierCurveTo(lowerW, H * 0.68, lowerW * 0.75, H * 0.82, lowerW * 0.45, H * 0.92);
+  // Lower bout - maintain width then curve to bottom (like upper bout)
+  ctx.bezierCurveTo(lowerW, H * 0.72, lowerW, H * 0.88, lowerW * 0.7, H * 0.95);
 
-  // Bottom curve - rounded arc
-  ctx.quadraticCurveTo(lowerW * 0.2, H * 0.98, 0, H * 0.98);
+  // Bottom curve - rounded arch (symmetric like upper bout)
+  ctx.bezierCurveTo(lowerW * 0.5, H, lowerW * 0.25, H, 0, H);
 
   // === LEFT SIDE (mirror) ===
-  ctx.quadraticCurveTo(-lowerW * 0.2, H * 0.98, -lowerW * 0.45, H * 0.92);
-  ctx.bezierCurveTo(-lowerW * 0.75, H * 0.82, -lowerW, H * 0.68, -lowerW, maxLowerY);
+  ctx.bezierCurveTo(-lowerW * 0.25, H, -lowerW * 0.5, H, -lowerW * 0.7, H * 0.95);
+  ctx.bezierCurveTo(-lowerW, H * 0.88, -lowerW, H * 0.72, -lowerW, maxLowerY);
   ctx.bezierCurveTo(-lowerW, H * 0.35, -lowerW * 0.75, lowerCornerY, -cBoutW - 18, lowerCornerY);
   ctx.bezierCurveTo(-cBoutW, lowerCornerY, -cBoutW, H * 0.08, -cBoutW, 0);
   ctx.bezierCurveTo(-cBoutW, -H * 0.08, -cBoutW, upperCornerY, -cBoutW - 18, upperCornerY);
